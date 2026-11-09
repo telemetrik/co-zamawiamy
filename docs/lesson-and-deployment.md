@@ -57,7 +57,7 @@ Niepewna próba tworzenia jest zapamiętana w `sessionStorage`, a próba głosow
 
 To ochrona przed przypadkowym powtórzeniem. Osoba korzystająca z innej przeglądarki lub czyszcząca pamięć może zagłosować ponownie. Nie ma identyfikacji uczestników ani zbierania imion i emaili.
 
-Wyniki są pobierane z bazy po otwarciu/odświeżeniu strony i po zapisie głosu. Nie ma pollingu ani transmisji na żywo. Procenty są zaokrąglone do pełnych liczb, więc ich suma może wynieść 99% lub 101%.
+Wyniki są pobierane z bazy po otwarciu strony i zapisie głosu, a po zagłosowaniu aktualizują się automatycznie: kolejny odczyt zaczyna się 2 sekundy po zakończeniu poprzedniego. To polling HTTP, bez dodatkowej usługi realtime. Ukrycie karty wstrzymuje odczyty. Powrót do karty lub odzyskanie połączenia uruchamia odczyt od razu. Przy błędzie przeglądarka zachowuje ostatnie wyniki, pokazuje komunikat i ponawia odczyty. Otwarta karta utrzymuje aktywność bazy, więc ten ruch trzeba uwzględnić przy ocenie limitów Neon i Vercel. Kod QR jest generowany w przeglądarce, bez zewnętrznego serwisu, i prowadzi do tego samego głosowania co kopiowany link. Procenty są zaokrąglone do pełnych liczb, więc ich suma może wynieść 99% lub 101%.
 
 ## Sprawdzenia
 
@@ -81,9 +81,9 @@ Produkcję można sprawdzić lokalnie przez `npm run build`, a następnie `npm s
 
 1. Skonfiguruj Neon, zastosuj migracje i wykonaj deploy na Vercel.
 2. Utwórz głosowanie z propozycjami Pizza, Sushi i Żurek.
-3. Kliknij **Kopiuj link** i otwórz go w drugiej przeglądarce albo na telefonie przez HTTPS.
+3. Kliknij **Kopiuj link** i otwórz go w drugiej przeglądarce albo zeskanuj widoczny kod QR telefonem. Telefon musi mieć dostęp do adresu aplikacji; `localhost` działa tylko na komputerze uruchamiającym serwer.
 4. Oddaj głos. Sprawdź potwierdzenie, wszystkie propozycje, liczniki i procenty.
-5. Oddaj drugi głos z innej przeglądarki. Pierwsza nie aktualizuje się sama; odśwież ją, aby zobaczyć nowy wynik.
+5. Oddaj drugi głos z innej przeglądarki. W pierwszej, widocznej karcie wynik zmieni się automatycznie po kolejnym odczycie, bez odświeżania strony.
 6. W Neon wybierz ten sam branch i bazę. W **Tables** obejrzyj `polls`, `options`, `votes` lub uruchom zapytanie poniżej w **SQL Editor**. Zapis jest widoczny od razu po zatwierdzeniu transakcji; otwarty wcześniej widok tabeli trzeba odświeżyć. Metryki monitoringu Neon to osobny widok, nie źródło potwierdzenia zapisu.
 7. Zrestartuj lokalny serwer lub wykonaj kolejne wdrożenie z tym samym połączeniem do bazy. Otwórz poprzedni link i sprawdź, że dane zostały zachowane.
 
@@ -96,15 +96,15 @@ GROUP BY p.id, o.id
 ORDER BY p.created_at DESC, o.position;
 ```
 
-## PostHog - osobny krok
+## PostHog
 
-SDK, pomiar odsłon i zdarzenia nie są zainstalowane. Przy późniejszej integracji:
+SDK, pomiar odsłon, obsługa błędów i poniższe zdarzenia są zainstalowane. Ustaw `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` oraz `NEXT_PUBLIC_POSTHOG_HOST` z `.env.example` i zrestartuj serwer lub wykonaj ponowny build. Bez konfiguracji aplikacja działa bez analityki:
 
 - `poll_created`: po poprawnej odpowiedzi `POST /api/polls`, przed przejściem na link.
 - `poll_link_copied`: dopiero po sukcesie `navigator.clipboard.writeText`.
 - `vote_submitted`: po poprawnej odpowiedzi `POST /api/polls/[pollId]/votes`.
 
-Dołączaj tylko `poll_id`, bez pytania i propozycji. Nie emituj zdarzeń zapisu w efekcie montowania strony. Przy ponawianiu operacji ustal deduplikację zdarzeń również po stronie analityki. Dobór konfiguracji PostHoga, limitów planu, prywatności, opóźnienia zdarzeń i test ich odbioru pozostaje do tego etapu.
+Dodatkowe pola tych zdarzeń opisują liczbę propozycji, pozycję wybranej opcji i ponowienie operacji; nie zawierają pytania, etykiet propozycji ani identyfikatora głosowania. SDK dodaje również swoje domyślne właściwości, np. adres strony. Serwer eksportuje logi `poll_created` i `vote_recorded`. Przy ponawianiu operacji deduplikacja zapisu w bazie nie oznacza deduplikacji zdarzeń analitycznych. Odbiór w rzeczywistym projekcie PostHog i konfigurację prywatności sprawdź przed wdrożeniem.
 
 ## Źródła konfiguracji
 

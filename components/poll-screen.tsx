@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { QRCodeSVG } from "qrcode.react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import posthog from "posthog-js";
 import { ApiError, postJson, readStorage, writeStorage } from "@/lib/client";
 import type { Poll, VoteInput } from "@/lib/types";
 import { isUuid } from "@/lib/validation";
+import { useLivePoll } from "@/lib/use-live-poll";
 import { Icon } from "./icons";
 
 type VoteRecord = VoteInput & { status: "pending" | "saved" };
@@ -22,9 +24,10 @@ const voteCount = (count: number) => `${count} ${count === 1 ? "głos" : count %
 const posthogConfigured = Boolean(process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN && process.env.NEXT_PUBLIC_POSTHOG_HOST);
 
 export function PollScreen({ initialPoll }: { initialPoll: Poll }) {
-  const [poll, setPoll] = useState(initialPoll);
   const [ready, setReady] = useState(false);
   const [record, setRecord] = useState<VoteRecord | null>(null);
+  const voted = record?.status === "saved";
+  const { poll, updatePoll, connection } = useLivePoll(initialPoll, ready && voted);
   const [selected, setSelected] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -42,7 +45,7 @@ export function PollScreen({ initialPoll }: { initialPoll: Poll }) {
       setRecord(saved); setSelected(saved.optionId);
       if (saved.status === "pending") setError("Poprzednia próba nie ma potwierdzenia. Ponów zapis wybranej odpowiedzi.");
     }
-    setLink(window.location.href);
+    setLink(new URL(`/p/${initialPoll.id}`, window.location.origin).href);
     setReady(true);
   }, [storageKey, initialPoll]);
 
@@ -64,7 +67,7 @@ export function PollScreen({ initialPoll }: { initialPoll: Poll }) {
           was_retry: record !== null,
         });
       }
-      setPoll(data.poll); setRecord(saved);
+      updatePoll(data.poll); setRecord(saved);
       setStorageWarning(!writeStorage("localStorage", storageKey, saved));
       requestAnimationFrame(() => resultRef.current?.focus());
     } catch (caught) {
@@ -78,20 +81,18 @@ export function PollScreen({ initialPoll }: { initialPoll: Poll }) {
   async function copyLink() {
     setCopyState("copying");
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      await navigator.clipboard.writeText(link);
       if (posthogConfigured) posthog.capture("poll_link_copied");
       setCopyState("copied");
     } catch { setCopyState("failed"); }
   }
-
-  const voted = record?.status === "saved";
 
   return <>
     <div className="poll-intro"><h1>{poll.question}</h1><p>{voted ? "Decyzja należy do ekipy. Oto aktualne wyniki." : "Jeden głos. Mniej ustalania, więcej jedzenia."}</p></div>
     <section className="form-sheet poll-sheet" aria-label={voted ? "Wyniki głosowania" : "Oddaj głos"}>
       {!ready ? <div className="loading-state" role="status">Wczytuję głosowanie...</div> : voted ? <>
         <div className="saved-message" role="status"><Icon name="check" /><p>Twój głos został zapisany</p></div>
-        <div className="results-heading"><h2 ref={resultRef} tabIndex={-1}>Tak głosuje ekipa</h2><span className="total-votes">{voteCount(poll.totalVotes)}</span></div>
+        <div className="results-heading"><h2 ref={resultRef} tabIndex={-1}>Tak głosuje ekipa</h2><span className="total-votes" aria-live="polite" aria-atomic="true">{voteCount(poll.totalVotes)}</span></div>
         {poll.totalVotes === 0 && <p className="notice">Nie ma jeszcze głosów. Udostępnij link ekipie.</p>}
         <ul className="results-list">
           {poll.options.map((option) => <li key={option.id} className="result-row">
@@ -100,7 +101,10 @@ export function PollScreen({ initialPoll }: { initialPoll: Poll }) {
             <p className="result-count">{voteCount(option.votes)}</p>
           </li>)}
         </ul>
-        <p className="results-note">Wyniki z chwili otwarcia lub oddania głosu. Odśwież stronę, aby zobaczyć nowsze.</p>
+        <p className={`results-note live-status ${connection === "live" ? "is-live" : ""}`} role="status">
+          <span className="live-dot" aria-hidden="true" />
+          {connection === "live" ? "Wyniki na żywo" : connection === "reconnecting" ? "Brak aktualizacji. Ponawiam połączenie..." : connection === "paused" ? "Aktualizacje wrócą po otwarciu karty." : "Łączę z wynikami na żywo..."}
+        </p>
       </> : <form onSubmit={vote} aria-busy={saving} noValidate>
         <fieldset className="vote-fieldset" disabled={saving}>
           <legend>Na co masz ochotę?</legend>
@@ -118,10 +122,14 @@ export function PollScreen({ initialPoll }: { initialPoll: Poll }) {
         <p className="form-footnote">Głosujesz bez podawania swoich danych.</p>
       </form>}
       {storageWarning && <p className="notice" role="status">Przeglądarka blokuje zapamiętanie głosu. {voted ? "Głos jest zapisany, ale po odświeżeniu możesz ponownie zobaczyć formularz." : "Przy błędzie ponów zapis bez opuszczania strony."}</p>}
-      <div className="share-section"><div><h2>Zbierz całą ekipę</h2><p>Wyślij link. Każdy wybierze coś dla siebie.</p></div>
-        <button type="button" className="button secondary" disabled={copyState === "copying"} onClick={copyLink}><Icon name={copyState === "copied" ? "check" : "copy"} />{copyState === "copied" ? "Link skopiowany" : copyState === "copying" ? "Kopiuję..." : "Kopiuj link"}</button>
+      <div className="share-section"><div><h2>Zbierz całą ekipę</h2><p>Wyślij link lub pokaż ekipie kod QR.</p></div>
+        <button type="button" className="button secondary" disabled={!link || copyState === "copying"} onClick={copyLink}><Icon name={copyState === "copied" ? "check" : "copy"} />{copyState === "copied" ? "Link skopiowany" : copyState === "copying" ? "Kopiuję..." : "Kopiuj link"}</button>
         <span className="sr-only" role="status">{copyState === "copied" ? "Link został skopiowany do schowka." : ""}</span>
         {copyState === "failed" && <div className="copy-fallback"><label htmlFor="poll-link">Nie udało się skopiować. Zaznacz i skopiuj link:</label><input id="poll-link" readOnly value={link} onFocus={(event) => event.target.select()} /></div>}
+        {link && <figure className="share-qr">
+          <QRCodeSVG value={link} size={192} level="M" marginSize={4} role="img" title="Kod QR z linkiem do głosowania" />
+          <figcaption><strong>Zeskanuj i zagłosuj</strong><p>Otwórz aparat w telefonie i skieruj go na kod.</p><a href={link}>Otwórz głosowanie</a></figcaption>
+        </figure>}
       </div>
     </section>
     <Link href="/" className="new-poll-link">Utwórz własne głosowanie <Icon name="arrow" /></Link>

@@ -42,9 +42,29 @@ Po skonfigurowaniu przez użytkownika `DATABASE_URL` w `.env.local` sprawdzono r
 
 Nie uruchamiano `npm run test:db` na głównej bazie aplikacji: nie skonfigurowano osobnego `TEST_DATABASE_URL`. Automatyczny zestaw integracyjny pozostaje sprawdzony na lokalnym PostgreSQL; powyższy przepływ i ponowienia sprawdzono na Neon przez UI, API i SQL.
 
+## Aktualizacje na żywo i QR - 2026-11-09
+
+- `npm test`: 7/7 istniejących testów; `npm run typecheck` i `npm run build`: poprawnie po zmianach.
+- W przeglądarce utworzono głosowanie `aebe5852-4322-4754-ac65-28d68ee8dd5c`. Kod QR był widoczny przed oddaniem głosu. Przycisk kopiowania zapisał w schowku dokładny adres głosowania.
+- Systemowy dekoder QR (Apple Vision) odczytał kod ze zrzutu ekranu i potwierdził dokładny adres testowego głosowania.
+- Po pierwszym głosie UI pokazywał 1 głos. Dodanie głosu drugiego uczestnika przez API zmieniło otwartą stronę na 2 głosy i 50%/50%/0%, bez przeładowania.
+- Sprawdzono również produkcyjny build przez `next start` z tą samą bazą Neon. Głos z osobnej pamięci przeglądarki dał łącznie 3 głosy.
+- Tymczasowe lokalne proxy wymuszało odpowiedzi 503 wyłącznie przy odczycie wyników. UI zachował 3 głosy i pokazał komunikat o ponawianiu. Po wyłączeniu symulacji sam wrócił do statusu "Wyniki na żywo", bez przeładowania. Proxy nie należy do kodu aplikacji.
+- Nie sprawdzano fizycznego telefonu ani publicznego wdrożenia. Ukrywanie karty i przełączanie trybu offline mają obsługę w kodzie; w tej sesji scenariusz powrotu po błędzie sprawdzono przez HTTP 503.
+- Testowe głosowanie pozostawiono w Neon. Nie zmieniano istniejących głosowań.
+
 ## Do sprawdzenia po konfiguracji usług
 
 - Nie weryfikowano planu ani wykorzystania limitów konta Neon. Nie restartowano infrastruktury samego dostawcy Neon.
 - Vercel nie został skonfigurowany ani wdrożony, zgodnie z ustalonym zakresem. Nie sprawdzono rzeczywistego redeployu ani telefonu pod publicznym adresem HTTPS.
-- PostHog nie jest zainstalowany i nie wysyła zdarzeń. Jego konfiguracja i weryfikacja są osobnym krokiem.
+- PostHog jest zainstalowany. Zdarzenia i logi sprawdzono lokalnie według opisu poniżej; odbiór w rzeczywistym projekcie PostHog pozostaje do sprawdzenia.
 - Tymczasowe serwery testowe i PostgreSQL zostały zatrzymane po sprawdzeniach. Uruchomienie aplikacji z Neon opisuje README.
+
+## PR #1 - PostHog po połączeniu z main
+
+- Rozwiązano konflikty ekranu głosowania oraz manifestu i lockfile zależności. Zachowano kod QR, aktualizacje wyników na żywo i zdarzenia PostHog.
+- `npm ci`, 7/7 testów jednostkowych, 7/7 testów integracyjnych na tymczasowym lokalnym PostgreSQL, `npm run typecheck` i build produkcyjny zakończyły się poprawnie.
+- Trzy testy Playwright z gałęzi `codex/playwright-ci`, uruchomione z tymczasowej konfiguracji poza repozytorium na produkcyjnym serwerze, potwierdziły: walidację duplikatów, tworzenie głosowania, widoczny QR, zapamiętanie głosu po odświeżeniu oraz aktualizację wyników po głosie drugiego uczestnika.
+- Dodatkowy test Chrome potwierdził kopiowanie dokładnego adresu, zapis głosu i wysyłkę `poll_created`, `vote_submitted`, `poll_link_copied` oraz logów serwera `poll_created` i `vote_recorded` do lokalnego odbiornika. Sprawdzono liczbę propozycji i pozycję wybranej opcji. SDK filtruje automatyzację jako boty, dlatego test dostarczenia zdarzeń emulował zwykłą przeglądarkę.
+- Poprawiono inicjalizację klienta: brak zmiennych PostHog wyłącza analitykę i nie rzuca wyjątku. Sprawdzono stronę w trybie deweloperskim bez tych zmiennych: brak błędów JavaScript.
+- Testy używały fikcyjnego tokenu PostHog i adresu localhost, bez wysyłania do zewnętrznej usługi i bez zapisu do Neon. Odbiór w rzeczywistym projekcie PostHog, konfiguracja wdrożenia i przechwytywanie wyjątków pozostają niezweryfikowane.

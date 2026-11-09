@@ -116,7 +116,7 @@ export function NewPoll() {
       <button className="button primary submit-button" type="submit" disabled={saving || !ready}>
         {saving ? "Tworzę głosowanie..." : pending ? "Ponów zapis" : "Utwórz głosowanie"}<Icon name="arrow" />
       </button>
-      <p className="form-footnote">Potem wystarczy skopiować link i wysłać go ekipie.</p>
+      <p className="form-footnote">Potem udostępnisz ekipie link lub kod QR.</p>
     </form>
   </section>;
 }
