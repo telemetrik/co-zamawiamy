@@ -68,3 +68,25 @@ Nie uruchamiano `npm run test:db` na głównej bazie aplikacji: nie skonfigurowa
 - Dodatkowy test Chrome potwierdził kopiowanie dokładnego adresu, zapis głosu i wysyłkę `poll_created`, `vote_submitted`, `poll_link_copied` oraz logów serwera `poll_created` i `vote_recorded` do lokalnego odbiornika. Sprawdzono liczbę propozycji i pozycję wybranej opcji. SDK filtruje automatyzację jako boty, dlatego test dostarczenia zdarzeń emulował zwykłą przeglądarkę.
 - Poprawiono inicjalizację klienta: brak zmiennych PostHog wyłącza analitykę i nie rzuca wyjątku. Sprawdzono stronę w trybie deweloperskim bez tych zmiennych: brak błędów JavaScript.
 - Testy używały fikcyjnego tokenu PostHog i adresu localhost, bez wysyłania do zewnętrznej usługi i bez zapisu do Neon. Odbiór w rzeczywistym projekcie PostHog, konfiguracja wdrożenia i przechwytywanie wyjątków pozostają niezweryfikowane.
+
+## Automatyczny zestaw E2E - 2026-11-09
+
+- Dodano trwałą konfigurację Playwright, 12 scenariuszy uruchamianych w Chromium na desktopie oraz w emulacji Pixel 7: **24/24 przeszły**, bez ponowień, na produkcyjnym buildzie i osobnym, tymczasowym PostgreSQL 18.6.
+- Zestaw sprawdza walidację pustych pól i duplikatów, limity liczby propozycji i fokus, tworzenie głosowania, obecność QR i jego link, odczyt prawdziwego schowka, odmowę dostępu do schowka, wymaganie wyboru odpowiedzi, zapamiętanie głosu po odświeżeniu i nieistniejące linki.
+- Głosy dwóch uczestników są oddawane przez UI w osobnych kontekstach przeglądarki. Test potwierdza aktualizację sumy i procentów bez przeładowania dokumentu. Sprawdzono też brak poziomego przewijania formularza i wyników w testowanych widokach.
+- Testy utraty odpowiedzi wykonują rzeczywisty zapis przez API, po czym przerywają odpowiedź. Ponowienie po odświeżeniu zachowuje identyfikator operacji. SQL potwierdza dokładnie jedno głosowanie, trzy propozycje oraz jeden głos dla odpowiednich scenariuszy.
+- Wymuszony błąd HTTP 503 odczytu zachowuje poprzednie wyniki. Po usunięciu błędu strona samodzielnie pobiera nowy głos. Oddzielnie sprawdzono powrót do aktualizacji po przełączeniu przeglądarki offline/online.
+- Sprawdzono odmowę uruchomienia bez `E2E_DATABASE_URL` oraz przy wskazaniu bazy aplikacji przez adres poolera lub bezpośredni.
+- Po E2E i testach integracyjnych odczyt SQL potwierdził **0 głosowań, 0 propozycji i 0 głosów** w tymczasowej bazie. Nie używano Neon ani bazy lokalnego serwera aplikacji.
+- `npm test`: 7/7; `npm run test:db`: 7/7; `npm run typecheck`: poprawnie. Build produkcyjny był częścią uruchomienia E2E i korzystał z oddzielnego katalogu `.next/e2e`.
+- Dodano workflow GitHub Actions z PostgreSQL 18 i raportami Playwright. Uruchomienie workflow na GitHub pozostaje do sprawdzenia po wysłaniu zmian. Zestaw sprawdza obecność QR i poprawność udostępnianego linku, ale nie dekoduje QR ani nie zastępuje testu na fizycznym telefonie.
+
+## Osobna baza testowa Neon - 2026-11-09
+
+- W istniejącym projekcie `aiph-co-zamawiamy` (`super-forest-35853872`) utworzono branch `tests` (`br-twilight-bread-bacjwjzi`) oraz pustą bazę `co_zamawiamy_test`. Endpoint testowy: `ep-old-darkness-ba38bhd1`, region Frankfurt, PostgreSQL 18. Compute ma stałe 0.25 CU i usypianie po 300 sekundach bezczynności.
+- Utworzono rolę `test_runner` z dostępem `read_write` do schematu `public` bazy testowej i dodano uprawnienia CREATE do tej bazy i schematu, potrzebne migracjom. SQL potwierdził brak SUPERUSER, CREATEDB, CREATEROLE i członkostwa w `neon_superuser`.
+- Do ignorowanego `.env.local` dodano `E2E_DATABASE_URL` i `TEST_DATABASE_URL`. Oba wskazują bazę testową i rolę `test_runner`, z bezpośrednim połączeniem i `sslmode=verify-full`. Zachowano dotychczasowy `DATABASE_URL` aplikacji.
+- `npm run test:db`: **7/7** na nowej bazie Neon. Migracje zostały zastosowane przez rolę testową.
+- `npm run test:e2e`: **24/24**, bez ponowień, na tej samej bazie Neon i produkcyjnym buildzie aplikacji. Czas przebiegu Playwright: 46.2 s. Przeglądarkę uruchomiono z wcześniej pobranego katalogu tymczasowego; następnie zainstalowano zgodne Chromium także w standardowym cache Playwright do kolejnych uruchomień.
+- Po obu zestawach SQL potwierdził 0 głosowań, 0 propozycji, 0 głosów i jedną zastosowaną migrację. Nie pozostały rekordy scenariuszy testowych.
+- `npm test`: **7/7**; `npm run typecheck` i `git diff --check`: poprawnie. GitHub Actions nadal używa własnego tymczasowego PostgreSQL; konfiguracja Neon dotyczy lokalnych uruchomień.

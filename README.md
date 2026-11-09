@@ -34,6 +34,32 @@ Test zapisu do PostgreSQL: ustaw `TEST_DATABASE_URL` na **osobną bazę/branch**
 
 Build produkcyjny uruchomisz przez `npm start`.
 
+## Testy end-to-end
+
+Playwright sprawdza aplikację w Chromium na desktopie i w emulacji telefonu Pixel 7. Testy przechodzą przez przeglądarkę, prawdziwe API i PostgreSQL.
+
+W projekcie Neon `aiph-co-zamawiamy` jest osobny branch `tests` z bazą `co_zamawiamy_test`. Rola `test_runner` ma dostęp do danych testowych oraz prawa do wykonywania migracji w tej bazie, bez uprawnień administracyjnych. Lokalne `E2E_DATABASE_URL` i `TEST_DATABASE_URL` są skonfigurowane w ignorowanym `.env.local` i używają połączenia bezpośredniego z `sslmode=verify-full`. Compute testowy ma 0.25 CU i usypia po 5 minutach bezczynności.
+
+1. Ustaw `E2E_DATABASE_URL` w `.env.local` lub środowisku procesu na **osobną bazę albo branch testowy PostgreSQL**. Testy odmawiają użycia adresu bazy aplikacji (`DATABASE_URL` lub `DATABASE_URL_UNPOOLED`, również przy różnicy między adresem poolera i bezpośrednim).
+2. Zainstaluj przeglądarkę i uruchom zestaw:
+
+```sh
+npx playwright install chromium
+npm run test:e2e
+```
+
+Runner stosuje migracje do bazy testowej, buduje aplikację produkcyjną w osobnym katalogu `.next/e2e` i uruchamia własny serwer na `http://127.0.0.1:3100`. Port musi być wolny. Analityka PostHog jest wyłączona podczas budowania i działania serwera testowego.
+
+Zestaw sprawdza walidację i limity formularza, tworzenie głosowania, link i obecność QR, prawdziwy schowek i jego odmowę dostępu, głosowanie dwóch uczestników, wyniki na żywo, zapamiętanie głosu, nieistniejące linki oraz powrót po błędach sieci. Testy ponowień przepuszczają zapis do bazy, przerywają odpowiedź i sprawdzają w SQL, że ponowienie po odświeżeniu nie tworzy duplikatu. Po każdym teście runner usuwa wyłącznie jego głosowania wraz z propozycjami i głosami, także po nieudanej asercji.
+
+```sh
+npm run test:e2e -- --project=chromium  # tylko desktop
+npm run test:e2e:ui                    # interaktywny runner
+npx playwright show-report            # raport ostatniego przebiegu
+```
+
+Przy błędzie raport zawiera zrzut ekranu i trace. GitHub Actions uruchamia ten sam zestaw na pull requestach i po pushu do `main`, z tymczasowym PostgreSQL 18, i przechowuje raport przez 14 dni. Konfiguracja jest zgodna z [dokumentacją Playwright](https://playwright.dev/docs/test-webserver).
+
 ## Wdrożenie i lekcja
 
 Na Vercel wybierz Next.js i Node.js 24.x. Ustaw `DATABASE_URL` dla Production; Preview powinno korzystać z osobnego brancha Neon. **Przed pierwszym wdrożeniem i po zmianie schematu uruchom raz `npm run db:migrate` z połączeniem do docelowej bazy, a dopiero potem deploy.** Migracje nie uruchamiają się w buildzie ani przy żądaniach.
