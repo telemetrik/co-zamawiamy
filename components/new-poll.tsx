@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import posthog from "posthog-js";
 import { ApiError, postJson, readStorage, writeStorage } from "@/lib/client";
 import type { CreatePollInput, FieldErrors } from "@/lib/types";
 import { AppError, validateCreatePoll } from "@/lib/validation";
@@ -8,6 +9,7 @@ import { Icon } from "./icons";
 
 const draftKey = "co-zamawiamy:pending-poll";
 const examples = ["Pizza", "Sushi", "Kebab", "Burgery", "Sałatka"];
+const posthogConfigured = Boolean(process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN && process.env.NEXT_PUBLIC_POSTHOG_HOST);
 
 export function NewPoll() {
   const [question, setQuestion] = useState("Co dziś zamawiamy?");
@@ -58,6 +60,12 @@ export function NewPoll() {
     setStorageWarning(!writeStorage("sessionStorage", draftKey, input));
     try {
       const { pollId } = await postJson<{ pollId: string }>("/api/polls", input);
+      if (posthogConfigured) {
+        posthog.capture("poll_created", {
+          option_count: input.options.length,
+          was_retry: pending !== null,
+        });
+      }
       writeStorage("sessionStorage", draftKey, null);
       window.location.assign(`/p/${pollId}`);
     } catch (caught) {

@@ -96,15 +96,15 @@ GROUP BY p.id, o.id
 ORDER BY p.created_at DESC, o.position;
 ```
 
-## PostHog - osobny krok
+## PostHog
 
-SDK, pomiar odsłon i zdarzenia nie są zainstalowane. Przy późniejszej integracji:
+SDK, pomiar odsłon, obsługa błędów i poniższe zdarzenia są zainstalowane. Ustaw `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` oraz `NEXT_PUBLIC_POSTHOG_HOST` z `.env.example` i zrestartuj serwer lub wykonaj ponowny build. Bez konfiguracji aplikacja działa bez analityki:
 
 - `poll_created`: po poprawnej odpowiedzi `POST /api/polls`, przed przejściem na link.
 - `poll_link_copied`: dopiero po sukcesie `navigator.clipboard.writeText`.
 - `vote_submitted`: po poprawnej odpowiedzi `POST /api/polls/[pollId]/votes`.
 
-Dołączaj tylko `poll_id`, bez pytania i propozycji. Nie emituj zdarzeń zapisu w efekcie montowania strony. Przy ponawianiu operacji ustal deduplikację zdarzeń również po stronie analityki. Dobór konfiguracji PostHoga, limitów planu, prywatności, opóźnienia zdarzeń i test ich odbioru pozostaje do tego etapu.
+Dodatkowe pola tych zdarzeń opisują liczbę propozycji, pozycję wybranej opcji i ponowienie operacji; nie zawierają pytania, etykiet propozycji ani identyfikatora głosowania. SDK dodaje również swoje domyślne właściwości, np. adres strony. Serwer eksportuje logi `poll_created` i `vote_recorded`. Przy ponawianiu operacji deduplikacja zapisu w bazie nie oznacza deduplikacji zdarzeń analitycznych. Odbiór w rzeczywistym projekcie PostHog i konfigurację prywatności sprawdź przed wdrożeniem.
 
 ## Źródła konfiguracji
 

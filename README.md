@@ -2,7 +2,7 @@
 
 Aplikacja do wspólnego wyboru lunchu: tworzysz głosowanie, wysyłasz link, ekipa głosuje i widzi wyniki. Bez kont i danych uczestników. Wyniki aktualizują się automatycznie, a głosowanie udostępnisz linkiem lub kodem QR.
 
-**Stack:** Next.js App Router, React, TypeScript, PostgreSQL w Neon, Drizzle. PostHog i wdrożenie na Vercel są osobnymi krokami.
+**Stack:** Next.js App Router, React, TypeScript, PostgreSQL w Neon, Drizzle, opcjonalna analityka PostHog. Wdrożenie na Vercel jest osobnym krokiem.
 
 ## Uruchomienie
 
@@ -48,4 +48,4 @@ Trzy tabele: `polls`, `options`, `votes`. Tworzenie głosowania jest transakcją
 
 Przeglądarka zapamiętuje oddany głos osobno dla każdego głosowania. Czyszczenie pamięci lub użycie innej przeglądarki umożliwia kolejny głos - to celowo prosta ochrona przed przypadkowym powtórzeniem, bez identyfikacji uczestników.
 
-PostHog nie jest zainstalowany. Miejsca późniejszego dodania `poll_created`, `poll_link_copied` i `vote_submitted` opisuje instrukcja lekcji.
+PostHog rejestruje `poll_created`, `poll_link_copied` i `vote_submitted`, błędy przeglądarki oraz serwerowe logi `poll_created` i `vote_recorded`. Aby go włączyć, ustaw `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` i `NEXT_PUBLIC_POSTHOG_HOST` z `.env.example`, a następnie zrestartuj serwer (lub ponownie zbuduj aplikację produkcyjną). Bez tych zmiennych aplikacja działa bez analityki.
