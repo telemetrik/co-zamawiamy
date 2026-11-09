@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "@fontsource-variable/geist";
 import "../tokens.css";
 import "./globals.css";
@@ -17,5 +18,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <header className="site-header"><Link href="/" className="wordmark" aria-label="Co zamawiamy? - strona główna"><span className="brand-icon"><Icon name="plate" /></span>Co zamawiamy?</Link><span className="header-note">Lunch ustalony.</span></header>
     <main id="main" className="main-column">{children}</main>
     <footer className="site-footer"><span>Małe głosowanie. Wspólny lunch.</span><span>Smacznego!</span></footer>
+    <SpeedInsights />
   </body></html>;
 }

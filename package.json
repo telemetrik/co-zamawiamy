@@ -21,6 +21,7 @@
     "@opentelemetry/exporter-logs-otlp-http": "^0.301.0",
     "@opentelemetry/resources": "^3.1.0",
     "@opentelemetry/sdk-logs": "^3.1.0",
+    "@vercel/speed-insights": "^2.1.0",
     "drizzle-orm": "^0.45.4",
     "next": "^16.4.5",
     "pg": "^8.23.1",
