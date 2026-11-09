@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import posthog from "posthog-js";
 import { ApiError, postJson, readStorage, writeStorage } from "@/lib/client";
 import type { Poll, VoteInput } from "@/lib/types";
 import { isUuid } from "@/lib/validation";
@@ -18,6 +19,7 @@ function validRecord(value: unknown, poll: Poll): value is VoteRecord {
 
 const percent = (votes: number, total: number) => total ? Math.round(votes / total * 100) : 0;
 const voteCount = (count: number) => `${count} ${count === 1 ? "głos" : count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 12 || count % 100 > 14) ? "głosy" : "głosów"}`;
+const posthogConfigured = Boolean(process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN && process.env.NEXT_PUBLIC_POSTHOG_HOST);
 
 export function PollScreen({ initialPoll }: { initialPoll: Poll }) {
   const [poll, setPoll] = useState(initialPoll);
@@ -55,6 +57,13 @@ export function PollScreen({ initialPoll }: { initialPoll: Poll }) {
     try {
       const data = await postJson<{ poll: Poll; optionId: string }>(`/api/polls/${poll.id}/votes`, { operationId: attempt.operationId, optionId: attempt.optionId });
       const saved: VoteRecord = { ...attempt, status: "saved" };
+      if (posthogConfigured) {
+        posthog.capture("vote_submitted", {
+          option_count: poll.options.length,
+          selected_option_position: poll.options.findIndex((option) => option.id === attempt.optionId) + 1,
+          was_retry: record !== null,
+        });
+      }
       setPoll(data.poll); setRecord(saved);
       setStorageWarning(!writeStorage("localStorage", storageKey, saved));
       requestAnimationFrame(() => resultRef.current?.focus());
@@ -68,8 +77,11 @@ export function PollScreen({ initialPoll }: { initialPoll: Poll }) {
 
   async function copyLink() {
     setCopyState("copying");
-    try { await navigator.clipboard.writeText(window.location.href); setCopyState("copied"); }
-    catch { setCopyState("failed"); }
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      if (posthogConfigured) posthog.capture("poll_link_copied");
+      setCopyState("copied");
+    } catch { setCopyState("failed"); }
   }
 
   const voted = record?.status === "saved";
