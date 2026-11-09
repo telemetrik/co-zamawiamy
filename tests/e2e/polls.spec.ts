@@ -20,7 +20,8 @@ test("formularz odrzuca powtarzające się propozycje", async ({ page }) => {
   await page.getByLabel("Propozycja 2", { exact: true }).fill("pizza");
   await page.getByLabel("Propozycja 3", { exact: true }).fill("Sushi");
   await page.getByRole("button", { name: "Utwórz głosowanie", exact: true }).click();
-  await expect(page.getByRole("alert")).toHaveText("Sprawdź zaznaczone pola.");
+  await expect(page.getByRole("region", { name: "Nowe głosowanie" }).getByRole("alert"))
+    .toHaveText("Sprawdź zaznaczone pola.");
   await expect(page.getByLabel("Propozycja 2", { exact: true })).toHaveAttribute("aria-invalid", "true");
   await expect(page).toHaveURL("/");
 });
@@ -31,7 +32,8 @@ test("tworzy głosowanie, udostępnia QR i pamięta oddany głos po odświeżeni
   await expect(page.getByRole("link", { name: "Otwórz głosowanie", exact: true })).toHaveAttribute("href", url);
 
   await page.getByRole("button", { name: "Głosuję", exact: true }).click();
-  await expect(page.getByRole("alert")).toHaveText("Wybierz jedną propozycję, zanim oddasz głos.");
+  await expect(page.getByRole("region", { name: "Oddaj głos" }).getByRole("alert"))
+    .toHaveText("Wybierz jedną propozycję, zanim oddasz głos.");
   await page.getByRole("radio", { name: "Pizza", exact: true }).check();
   await page.getByRole("button", { name: "Głosuję", exact: true }).click();
   const results = page.getByRole("region", { name: "Wyniki głosowania" });
