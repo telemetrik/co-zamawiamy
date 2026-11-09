@@ -1,6 +1,6 @@
 # Co zamawiamy?
 
-Aplikacja do wspólnego wyboru lunchu: tworzysz głosowanie, wysyłasz link, ekipa głosuje i widzi wyniki. Bez kont, danych uczestników i aktualizacji na żywo.
+Aplikacja do wspólnego wyboru lunchu: tworzysz głosowanie, wysyłasz link, ekipa głosuje i widzi wyniki. Bez kont i danych uczestników. Wyniki aktualizują się automatycznie, a głosowanie udostępnisz linkiem lub kodem QR.
 
 **Stack:** Next.js App Router, React, TypeScript, PostgreSQL w Neon, Drizzle. PostHog i wdrożenie na Vercel są osobnymi krokami.
 
@@ -44,7 +44,7 @@ Stan sprawdzeń i granice weryfikacji: [weryfikacja](docs/verification.md).
 
 ## Jak działa zapis
 
-Trzy tabele: `polls`, `options`, `votes`. Tworzenie głosowania jest transakcją; serwer waliduje dane i sprawdza przynależność propozycji. Unikalne identyfikatory operacji zabezpieczają zapis przed powtórzeniem po błędzie sieci. Wyniki po odświeżeniu pochodzą z bazy.
+Trzy tabele: `polls`, `options`, `votes`. Tworzenie głosowania jest transakcją; serwer waliduje dane i sprawdza przynależność propozycji. Unikalne identyfikatory operacji zabezpieczają zapis przed powtórzeniem po błędzie sieci. Wyniki pochodzą z bazy. Po oddaniu głosu przeglądarka pobiera je automatycznie co 2 sekundy od zakończenia poprzedniego odczytu. Ukryta karta wstrzymuje odczyty; powrót do niej lub odzyskanie połączenia wznawia aktualizacje. Przy błędzie pozostają ostatnie wyniki i komunikat o ponawianiu połączenia. Kod QR pojawia się na stronie głosowania od razu po jego utworzeniu i jest generowany lokalnie z tego samego adresu co kopiowany link.
 
 Przeglądarka zapamiętuje oddany głos osobno dla każdego głosowania. Czyszczenie pamięci lub użycie innej przeglądarki umożliwia kolejny głos - to celowo prosta ochrona przed przypadkowym powtórzeniem, bez identyfikacji uczestników.
 

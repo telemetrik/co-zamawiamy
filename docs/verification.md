@@ -42,6 +42,17 @@ Po skonfigurowaniu przez użytkownika `DATABASE_URL` w `.env.local` sprawdzono r
 
 Nie uruchamiano `npm run test:db` na głównej bazie aplikacji: nie skonfigurowano osobnego `TEST_DATABASE_URL`. Automatyczny zestaw integracyjny pozostaje sprawdzony na lokalnym PostgreSQL; powyższy przepływ i ponowienia sprawdzono na Neon przez UI, API i SQL.
 
+## Aktualizacje na żywo i QR - 2026-11-09
+
+- `npm test`: 7/7 istniejących testów; `npm run typecheck` i `npm run build`: poprawnie po zmianach.
+- W przeglądarce utworzono głosowanie `aebe5852-4322-4754-ac65-28d68ee8dd5c`. Kod QR był widoczny przed oddaniem głosu. Przycisk kopiowania zapisał w schowku dokładny adres głosowania.
+- Systemowy dekoder QR (Apple Vision) odczytał kod ze zrzutu ekranu i potwierdził dokładny adres testowego głosowania.
+- Po pierwszym głosie UI pokazywał 1 głos. Dodanie głosu drugiego uczestnika przez API zmieniło otwartą stronę na 2 głosy i 50%/50%/0%, bez przeładowania.
+- Sprawdzono również produkcyjny build przez `next start` z tą samą bazą Neon. Głos z osobnej pamięci przeglądarki dał łącznie 3 głosy.
+- Tymczasowe lokalne proxy wymuszało odpowiedzi 503 wyłącznie przy odczycie wyników. UI zachował 3 głosy i pokazał komunikat o ponawianiu. Po wyłączeniu symulacji sam wrócił do statusu "Wyniki na żywo", bez przeładowania. Proxy nie należy do kodu aplikacji.
+- Nie sprawdzano fizycznego telefonu ani publicznego wdrożenia. Ukrywanie karty i przełączanie trybu offline mają obsługę w kodzie; w tej sesji scenariusz powrotu po błędzie sprawdzono przez HTTP 503.
+- Testowe głosowanie pozostawiono w Neon. Nie zmieniano istniejących głosowań.
+
 ## Do sprawdzenia po konfiguracji usług
 
 - Nie weryfikowano planu ani wykorzystania limitów konta Neon. Nie restartowano infrastruktury samego dostawcy Neon.
