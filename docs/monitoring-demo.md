@@ -2,7 +2,7 @@
 
 Kontrolowana usterka do lekcji AI Product Heroes. Przy dokładnie pięciu
 propozycjach zapis głosu działa, ale render wyników rzuca `PollResultsDemoError`.
-Głosowania z 2-4 propozycjami działają normalnie. Obecnie usterka jest włączona
+Głosowania z 2-4 propozycjami działają normalnie. Obecnie usterka jest wyłączona
 bezpośrednio w kodzie.
 
 ## Przełącznik w kodzie
@@ -10,7 +10,7 @@ bezpośrednio w kodzie.
 W `lib/demo-results-error.ts` ustaw:
 
 ```ts
-export const DEMO_RESULTS_ERROR_ENABLED = true;
+export const DEMO_RESULTS_ERROR_ENABLED = false;
 ```
 
 `true` włącza usterkę, `false` przywraca prawidłowe wyniki. Warunek w

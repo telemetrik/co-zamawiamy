@@ -1,5 +1,5 @@
 // Przełącz w kodzie: true = regresja demo, false = poprawne wyniki.
-export const DEMO_RESULTS_ERROR_ENABLED = true;
+export const DEMO_RESULTS_ERROR_ENABLED = false;
 
 // Kontrolowana usterka do lekcji monitoringu.
 export class PollResultsDemoError extends Error {
