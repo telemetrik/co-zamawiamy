@@ -93,12 +93,11 @@ export function NewPoll() {
         <p className="field-help" id="options-help">Dodaj od 2 do 5 różnych propozycji.</p>
         <div className="proposal-list">
           {options.map((option, index) => <div key={option.id} className="proposal-field">
-            <label htmlFor={`option-${option.id}`}>Propozycja {index + 1}</label>
             <div className="input-row">
               <span className="option-number" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
               <input id={`option-${option.id}`} name={`option-${index}`} ref={index === options.length - 1 ? newInputRef : undefined}
                 placeholder={examples[index]} value={option.value} maxLength={60} required readOnly={!!pending}
-                aria-invalid={!!errors[`option-${index}`]} aria-describedby={`help-${option.id}`}
+                aria-label={`Propozycja ${index + 1}`} aria-invalid={!!errors[`option-${index}`]} aria-describedby={`help-${option.id}`}
                 onChange={(event) => setOptions(options.map((item) => item.id === option.id ? { ...item, value: event.target.value } : item))} />
               <button className="icon-button" type="button" aria-label={`Usuń propozycję ${index + 1}`} disabled={options.length <= 2 || !!pending}
                 onClick={() => { setOptions(options.filter((item) => item.id !== option.id)); setErrors({}); }}><Icon name="close" /></button>
