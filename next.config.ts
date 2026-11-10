@@ -12,7 +12,9 @@ export default withPostHogConfig(nextConfig, {
   host: process.env.POSTHOG_HOST,
   sourcemaps: {
     enabled: Boolean(
-      process.env.POSTHOG_API_KEY && process.env.POSTHOG_PROJECT_ID,
+      process.env.PLAYWRIGHT_TEST !== "1" &&
+        process.env.POSTHOG_API_KEY &&
+        process.env.POSTHOG_PROJECT_ID,
     ),
     deleteAfterUpload: true,
   },

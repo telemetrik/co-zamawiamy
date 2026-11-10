@@ -11,6 +11,8 @@
   --color-accent-hover: oklch(43% 0.16 30);
   --color-accent-ink: oklch(100% 0 0);
   --color-accent-soft: oklch(96% 0.025 35);
+  --color-danger: oklch(49% 0.17 30);
+  --color-danger-soft: oklch(96% 0.025 35);
   --color-focus: oklch(8% 0.005 30);
   --color-shadow: oklch(25% 0.02 65 / 0.035);
   --color-clear: transparent;
@@ -35,4 +37,10 @@
   --ease-in: cubic-bezier(0.4, 0, 1, 1);
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
   --dur-fast: 120ms;
+}
+
+:root[data-environment="development"] {
+  --color-accent: oklch(44% 0.12 150);
+  --color-accent-hover: oklch(38% 0.10 150);
+  --color-accent-soft: oklch(96% 0.025 150);
 }

@@ -13,8 +13,11 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="pl"><body>
+  const isProduction = (process.env.VERCEL_ENV ?? process.env.NODE_ENV) === "production";
+
+  return <html lang="pl" data-environment={isProduction ? "production" : "development"}><body>
     <a className="skip-link" href="#main">Przejdź do treści</a>
+    <div className="environment-bar" aria-label="Środowisko aplikacji">{isProduction ? "PRODUKCJA" : "DEV"}</div>
     <header className="site-header"><Link href="/" className="wordmark" aria-label="Co zamawiamy? - strona główna"><span className="brand-icon"><Icon name="plate" /></span>Co zamawiamy?</Link><span className="header-note">Lunch ustalony.</span></header>
     <main id="main" className="main-column">{children}</main>
     <footer className="site-footer"><span>Małe głosowanie. Wspólny lunch.</span><span>Smacznego!</span><a href="https://superhero.tech">superhero.tech</a></footer>

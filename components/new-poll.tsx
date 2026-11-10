@@ -99,7 +99,7 @@ export function NewPoll() {
                 placeholder={examples[index]} value={option.value} maxLength={60} required readOnly={!!pending}
                 aria-label={`Propozycja ${index + 1}`} aria-invalid={!!errors[`option-${index}`]} aria-describedby={`help-${option.id}`}
                 onChange={(event) => setOptions(options.map((item) => item.id === option.id ? { ...item, value: event.target.value } : item))} />
-              <button className="icon-button" type="button" aria-label={`Usuń propozycję ${index + 1}`} disabled={options.length <= 2 || !!pending}
+              <button className="icon-button" type="button" tabIndex={-1} aria-label={`Usuń propozycję ${index + 1}`} disabled={options.length <= 2 || !!pending}
                 onClick={() => { setOptions(options.filter((item) => item.id !== option.id)); setErrors({}); }}><Icon name="close" /></button>
             </div>
             <p id={`help-${option.id}`} className="field-help field-error option-help">{errors[`option-${index}`] || ""}</p>
