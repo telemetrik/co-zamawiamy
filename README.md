@@ -68,7 +68,7 @@ GitHub Actions uruchamia ten sam zestaw na pull requestach i po pushu do `main`,
 
 Na Vercel wybierz Next.js i Node.js 24.x. Ustaw `DATABASE_URL` dla Production; Preview powinno korzystać z osobnego brancha Neon. **Przed pierwszym wdrożeniem i po zmianie schematu uruchom raz `npm run db:migrate -- --target HOST:PORT/BAZA` z jawnym celem zgodnym z konfiguracją, a dopiero potem deploy.** Migracje nie uruchamiają się w buildzie ani przy żądaniach.
 
-Górny pasek, linki i przyciski mają czerwony motyw z etykietą `PRODUKCJA` dla `VERCEL_ENV=production`, a zielony z etykietą `DEV` dla pozostałych środowisk Vercel. Poza Vercel decyduje `NODE_ENV`: `npm run dev` ma motyw DEV, a build produkcyjny motyw PRODUKCJA.
+Górny pasek, linki i przyciski mają fioletowy motyw dla `VERCEL_ENV=production` (etykieta `PRODUKCJA`) oraz `VERCEL_ENV=preview` (etykieta `PREVIEW`). Środowisko development ma zielony motyw z etykietą `DEV`. Poza Vercel decyduje `NODE_ENV`: `npm run dev` ma motyw DEV, a build produkcyjny motyw PRODUKCJA.
 
 Pełne instrukcje konfiguracji, migracji, podglądu rekordów, ograniczeń darmowych planów i scenariusz demonstracji: [lekcja i wdrożenie](docs/lesson-and-deployment.md).
 

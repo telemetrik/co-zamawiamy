@@ -7,10 +7,10 @@
   --color-muted: oklch(49% 0.017 50);
   --color-rule: oklch(87% 0.012 65);
   --color-input-rule: oklch(76% 0.018 65);
-  --color-accent: oklch(49% 0.17 30);
-  --color-accent-hover: oklch(43% 0.16 30);
+  --color-accent: oklch(49% 0.17 300);
+  --color-accent-hover: oklch(43% 0.16 300);
   --color-accent-ink: oklch(100% 0 0);
-  --color-accent-soft: oklch(96% 0.025 35);
+  --color-accent-soft: oklch(96% 0.025 300);
   --color-danger: oklch(49% 0.17 30);
   --color-danger-soft: oklch(96% 0.025 35);
   --color-focus: oklch(8% 0.005 30);
