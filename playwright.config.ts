@@ -43,6 +43,7 @@ export default defineConfig({
       DATABASE_URL_UNPOOLED: databaseUrl,
       NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN: "",
       NEXT_PUBLIC_POSTHOG_HOST: "",
+      NEXT_PUBLIC_DEMO_RESULTS_ERROR: process.env.NEXT_PUBLIC_DEMO_RESULTS_ERROR ?? "0",
     },
   },
 });

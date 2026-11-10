@@ -8,6 +8,7 @@ import { ApiError, postJson, readStorage, writeStorage } from "@/lib/client";
 import type { Poll, VoteInput } from "@/lib/types";
 import { isUuid } from "@/lib/validation";
 import { useLivePoll } from "@/lib/use-live-poll";
+import { PollResultsDemoError } from "@/lib/demo-results-error";
 import { Icon } from "./icons";
 
 type VoteRecord = VoteInput & { status: "pending" | "saved" };
@@ -85,6 +86,12 @@ export function PollScreen({ initialPoll }: { initialPoll: Poll }) {
       if (posthogConfigured) posthog.capture("poll_link_copied");
       setCopyState("copied");
     } catch { setCopyState("failed"); }
+  }
+
+  // Rzucamy podczas renderowania, po potwierdzeniu zapisu i zapamiętaniu głosu.
+  // Wyjątek przejmie app/error.tsx i zgłosi go do PostHoga.
+  if (process.env.NEXT_PUBLIC_DEMO_RESULTS_ERROR === "1" && ready && voted && poll.options.length === 5) {
+    throw new PollResultsDemoError();
   }
 
   return <>

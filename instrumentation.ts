@@ -1,6 +1,8 @@
 import { BatchLogRecordProcessor, LoggerProvider } from "@opentelemetry/sdk-logs";
 import { OTLPLogExporter } from "@opentelemetry/exporter-logs-otlp-http";
 import { resourceFromAttributes } from "@opentelemetry/resources";
+import { createOnRequestError } from "@posthog/next";
+import { getPostHogServer } from "@/lib/posthog-server";
 
 const posthogProjectToken = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN;
 const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST;
@@ -31,4 +33,15 @@ if (!loggerProvider && process.env.NODE_ENV !== "production") {
   );
 }
 
-export function register() {}
+export function register() {
+  if (process.env.NEXT_RUNTIME === "nodejs") {
+    getPostHogServer();
+  }
+}
+
+export const onRequestError = posthogProjectToken && posthogHost
+  ? createOnRequestError({
+      apiKey: posthogProjectToken,
+      host: posthogHost,
+    })
+  : async () => {};

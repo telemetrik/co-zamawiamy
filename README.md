@@ -68,6 +68,10 @@ Pełne instrukcje konfiguracji, migracji, podglądu rekordów, ograniczeń darmo
 
 Stan sprawdzeń i granice weryfikacji: [weryfikacja](docs/verification.md).
 
+Demo monitoringu w PostHog: [głos zapisany, wyniki nie działają](docs/monitoring-demo.md).
+Flaga `NEXT_PUBLIC_DEMO_RESULTS_ERROR=1` włącza kontrolowany błąd wyników przy pięciu
+propozycjach. Domyślnie usterka jest wyłączona.
+
 ## Jak działa zapis
 
 Trzy tabele: `polls`, `options`, `votes`. Tworzenie głosowania jest transakcją; serwer waliduje dane i sprawdza przynależność propozycji. Unikalne identyfikatory operacji zabezpieczają zapis przed powtórzeniem po błędzie sieci. Wyniki pochodzą z bazy. Po oddaniu głosu przeglądarka pobiera je automatycznie co 2 sekundy od zakończenia poprzedniego odczytu. Ukryta karta wstrzymuje odczyty; powrót do niej lub odzyskanie połączenia wznawia aktualizacje. Przy błędzie pozostają ostatnie wyniki i komunikat o ponawianiu połączenia. Kod QR pojawia się na stronie głosowania od razu po jego utworzeniu i jest generowany lokalnie z tego samego adresu co kopiowany link.
