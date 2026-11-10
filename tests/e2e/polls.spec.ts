@@ -43,12 +43,13 @@ test("pozwala dodać najwyżej 5 i zostawić co najmniej 2 propozycje", async ({
 
 test("tworzy głosowanie, udostępnia link i QR, zapisuje głos i pamięta go po odświeżeniu", async ({ page, context }) => {
   const url = await createPoll(page);
+  const shareUrl = new URL(new URL(url).pathname, "https://co-zamawiamy.vercel.app/").href;
   await expect(page.getByRole("img", { name: "Kod QR z linkiem do głosowania" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Otwórz głosowanie", exact: true })).toHaveAttribute("href", url);
+  await expect(page.getByRole("link", { name: "Otwórz głosowanie", exact: true })).toHaveAttribute("href", shareUrl);
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await page.getByRole("button", { name: "Kopiuj link", exact: true }).click();
   await expect(page.getByRole("button", { name: "Link skopiowany", exact: true })).toBeVisible();
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(url);
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(shareUrl);
 
   await page.getByRole("button", { name: "Głosuję", exact: true }).click();
   await expect(page.getByRole("region", { name: "Oddaj głos" }).getByRole("alert")).toHaveText("Wybierz jedną propozycję, zanim oddasz głos.");
@@ -69,12 +70,13 @@ test("tworzy głosowanie, udostępnia link i QR, zapisuje głos i pamięta go po
 
 test("udostępnia ręczne kopiowanie, gdy schowek odmawia dostępu", async ({ page }) => {
   const url = await createPoll(page);
+  const shareUrl = new URL(new URL(url).pathname, "https://co-zamawiamy.vercel.app/").href;
   await page.evaluate(() => {
     navigator.clipboard.writeText = async () => { throw new DOMException("Denied", "NotAllowedError"); };
   });
   await page.getByRole("button", { name: "Kopiuj link", exact: true }).click();
   const link = page.getByLabel("Nie udało się skopiować. Zaznacz i skopiuj link:");
-  await expect(link).toHaveValue(url);
+  await expect(link).toHaveValue(shareUrl);
   await expect(link).toHaveAttribute("readonly", "");
 });
 
