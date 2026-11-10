@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
+import { databaseTarget } from "./scripts/migration-target";
 
 const databaseUrl = process.env.E2E_DATABASE_URL;
 if (!databaseUrl) {
@@ -15,6 +16,9 @@ for (const appUrl of [process.env.DATABASE_URL, process.env.DATABASE_URL_UNPOOLE
     throw new Error("E2E_DATABASE_URL musi wskazywać inną bazę lub branch niż baza aplikacji.");
   }
 }
+
+// Cel pochodzi z już sprawdzonej bazy E2E. Cytowanie chroni polecenie powłoki.
+const migrationTarget = "'" + databaseTarget(databaseUrl).replaceAll("'", "'\\''") + "'";
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -33,7 +37,7 @@ export default defineConfig({
     { name: "mobile-chromium", use: { ...devices["Pixel 7"] } },
   ],
   webServer: {
-    command: "npm run db:migrate && npm run build && npm run start -- --port 3100",
+    command: `npm run db:migrate -- --target ${migrationTarget} && npm run build && npm run start -- --port 3100`,
     url: "http://127.0.0.1:3100",
     reuseExistingServer: false,
     timeout: 180_000,
