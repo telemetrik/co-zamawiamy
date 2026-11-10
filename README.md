@@ -71,8 +71,9 @@ Pełne instrukcje konfiguracji, migracji, podglądu rekordów, ograniczeń darmo
 Stan sprawdzeń i granice weryfikacji: [weryfikacja](docs/verification.md).
 
 Demo monitoringu w PostHog: [głos zapisany, wyniki nie działają](docs/monitoring-demo.md).
-Flaga `NEXT_PUBLIC_DEMO_RESULTS_ERROR=1` włącza kontrolowany błąd wyników przy pięciu
-propozycjach. Domyślnie usterka jest wyłączona.
+Stała `DEMO_RESULTS_ERROR_ENABLED` w `lib/demo-results-error.ts` steruje błędem
+wyników przy pięciu propozycjach: `true` włącza usterkę, `false` ją wyłącza.
+Obecnie usterka jest włączona. Regresję i jej cofnięcie można pokazać zmianą kodu w Git.
 
 ## Jak działa zapis
 

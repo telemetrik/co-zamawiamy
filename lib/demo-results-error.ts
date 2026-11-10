@@ -1,4 +1,7 @@
-// Kontrolowana usterka do lekcji monitoringu. Włączana wyłącznie flagą demo.
+// Przełącz w kodzie: true = regresja demo, false = poprawne wyniki.
+export const DEMO_RESULTS_ERROR_ENABLED = true;
+
+// Kontrolowana usterka do lekcji monitoringu.
 export class PollResultsDemoError extends Error {
   readonly optionCount = 5;
 

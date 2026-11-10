@@ -1,4 +1,5 @@
 import { createPoll, expect, fillPoll, test, vote } from "./fixtures";
+import { DEMO_RESULTS_ERROR_ENABLED } from "../../lib/demo-results-error";
 
 test("demo monitoringu psuje tylko wyniki pięciu propozycji i zachowuje zapisany głos", async ({ page, database }) => {
   // Kontrola: zwykłe głosowanie działa również przy włączonej usterce.
@@ -16,8 +17,7 @@ test("demo monitoringu psuje tylko wyniki pięciu propozycji i zachowuje zapisan
   await page.getByRole("radio", { name: "Sałatka", exact: true }).check();
   await page.getByRole("button", { name: "Głosuję", exact: true }).click();
 
-  const demoEnabled = process.env.NEXT_PUBLIC_DEMO_RESULTS_ERROR === "1";
-  const expectedHeading = demoEnabled ? "Chwila przerwy" : "Tak głosuje ekipa";
+  const expectedHeading = DEMO_RESULTS_ERROR_ENABLED ? "Chwila przerwy" : "Tak głosuje ekipa";
   await expect(page.getByRole("heading", { name: expectedHeading, exact: true })).toBeVisible();
 
   const saved = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)!), `co-zamawiamy:vote:${pollId}`);
