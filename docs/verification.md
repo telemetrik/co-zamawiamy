@@ -1,5 +1,13 @@
 # Weryfikacja - 2026-11-09
 
+## Izolacja plików trace Playwright - 2026-11-10
+
+- Błąd `browserContext.close: ENOENT` odtworzono dwoma niezależnymi runnerami: drugi usuwał wspólny katalog wyników, gdy pierwszy nadal nagrywał trace z dwóch kontekstów przeglądarki.
+- Konfiguracja automatycznie nadaje przebiegowi osobny `test-results/<UUID>/`. ID jest dziedziczone przez workery. Zachowano `retain-on-failure`, domyślny raport HTML i wspólny plik ostatniego wyniku dla `--last-failed`.
+- Kontrolowana próba po poprawce zakończyła się poprawnie dla obu równoległych runnerów. Sprawdzono poprawność archiwów ZIP oraz obecność trace obu kontekstów. Osobny, celowo nieudany test potwierdził zachowanie `trace.zip` przy błędzie asercji; `--last-failed --list` odnalazł ten test w kolejnym przebiegu.
+- Zwykłe `npm run test:e2e`, bez dodatkowych argumentów katalogu wyników: **26/26** na bazie testowej Neon, 45.2 s, bez ponowień. `npm test`: **12/12**; `npm run typecheck` i `git diff --check`: poprawnie.
+- Izolacja dotyczy artefaktów. Pełne przebiegi nadal współdzielą port 3100 i build `.next/e2e`, więc nie uruchamiają równolegle dwóch serwerów aplikacji.
+
 ## Zakończone sprawdzenia
 
 - `npm test`: 7/7 testów walidacji i obsługi żądań HTTP.

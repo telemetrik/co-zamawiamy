@@ -1,3 +1,6 @@
+import { randomUUID } from "node:crypto";
+import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { defineConfig, devices } from "@playwright/test";
 import { databaseTarget } from "./scripts/migration-target";
 
@@ -20,8 +23,16 @@ for (const appUrl of [process.env.DATABASE_URL, process.env.DATABASE_URL_UNPOOLE
 // Cel pochodzi z już sprawdzonej bazy E2E. Cytowanie chroni polecenie powłoki.
 const migrationTarget = "'" + databaseTarget(databaseUrl).replaceAll("'", "'\\''") + "'";
 
+// Runner czyści outputDir przy starcie. Osobny katalog chroni trace aktywnego
+// przebiegu; ID przekazujemy w środowisku także do jego workerów.
+const resultsRoot = fileURLToPath(new URL("./test-results/", import.meta.url));
+const runId = process.env.CO_ZAMAWIAMY_PLAYWRIGHT_RUN_ID ??= randomUUID();
+// --last-failed nadal odczytuje wynik poprzedniego przebiegu.
+process.env.PLAYWRIGHT_LAST_RUN_OUTPUT_FILE ??= join(resultsRoot, ".last-run.json");
+
 export default defineConfig({
   testDir: "./tests/e2e",
+  outputDir: join(resultsRoot, runId),
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,

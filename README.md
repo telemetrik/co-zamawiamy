@@ -60,7 +60,9 @@ npm run test:e2e:ui                    # interaktywny runner
 npx playwright show-report            # raport ostatniego przebiegu
 ```
 
-Przy błędzie raport zawiera zrzut ekranu i trace. GitHub Actions uruchamia ten sam zestaw na pull requestach i po pushu do `main`, z tymczasowym PostgreSQL 18, i przechowuje raport przez 14 dni. Konfiguracja jest zgodna z [dokumentacją Playwright](https://playwright.dev/docs/test-webserver).
+Przy błędzie raport zawiera zrzut ekranu i trace. Każde uruchomienie automatycznie zapisuje artefakty w osobnym `test-results/<ID przebiegu>/`, żeby inny runner nie usunął aktywnych plików trace. Raport HTML pozostaje w `playwright-report/`, a `--last-failed` korzysta ze wspólnego `test-results/.last-run.json`. Port 3100 i build `.next/e2e` nadal pozwalają na jeden pełny przebieg aplikacji naraz.
+
+GitHub Actions uruchamia ten sam zestaw na pull requestach i po pushu do `main`, z tymczasowym PostgreSQL 18, i przechowuje raport przez 14 dni. Konfiguracja jest zgodna z [dokumentacją Playwright](https://playwright.dev/docs/test-webserver).
 
 ## Wdrożenie i lekcja
 
