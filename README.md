@@ -60,7 +60,9 @@ npm run test:e2e:ui                    # interaktywny runner
 npx playwright show-report            # raport ostatniego przebiegu
 ```
 
-Przy błędzie raport zawiera zrzut ekranu i trace. GitHub Actions uruchamia ten sam zestaw na pull requestach i po pushu do `main`, z tymczasowym PostgreSQL 18, i przechowuje raport przez 14 dni. Konfiguracja jest zgodna z [dokumentacją Playwright](https://playwright.dev/docs/test-webserver).
+Przy błędzie raport zawiera zrzut ekranu i trace. Każde uruchomienie automatycznie zapisuje artefakty w osobnym `test-results/<ID przebiegu>/`, żeby inny runner nie usunął aktywnych plików trace. Raport HTML pozostaje w `playwright-report/`, a `--last-failed` korzysta ze wspólnego `test-results/.last-run.json`. Port 3100 i build `.next/e2e` nadal pozwalają na jeden pełny przebieg aplikacji naraz.
+
+GitHub Actions uruchamia ten sam zestaw na pull requestach i po pushu do `main`, z tymczasowym PostgreSQL 18, i przechowuje raport przez 14 dni. Konfiguracja jest zgodna z [dokumentacją Playwright](https://playwright.dev/docs/test-webserver).
 
 ## Wdrożenie i lekcja
 
@@ -74,10 +76,8 @@ Stan sprawdzeń i granice weryfikacji: [weryfikacja](docs/verification.md).
 
 Kontrola nowego wydania, warunki zatrzymania publikacji i pierwsze kroki awarii: [instrukcja dla Piotra](docs/release-and-recovery.md).
 
-Demo monitoringu w PostHog: [głos zapisany, wyniki nie działają](docs/monitoring-demo.md).
-Stała `DEMO_RESULTS_ERROR_ENABLED` w `lib/demo-results-error.ts` steruje błędem
-wyników przy pięciu propozycjach: `true` włącza usterkę, `false` ją wyłącza.
-Obecnie usterka jest włączona. Regresję i jej cofnięcie można pokazać zmianą kodu w Git.
+Naprawa demonstracyjnego błędu wyników pięciu propozycji i jej weryfikacja:
+[głos zapisany, wyniki działają](docs/monitoring-demo.md).
 
 ## Jak działa zapis
 

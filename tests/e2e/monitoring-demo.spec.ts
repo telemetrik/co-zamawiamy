@@ -1,8 +1,10 @@
 import { createPoll, expect, fillPoll, test, vote } from "./fixtures";
-import { DEMO_RESULTS_ERROR_ENABLED } from "../../lib/demo-results-error";
 
-test("demo monitoringu psuje tylko wyniki pięciu propozycji i zachowuje zapisany głos", async ({ page, database }) => {
-  // Kontrola: zwykłe głosowanie działa również przy włączonej usterce.
+test("wyniki pięciu propozycji działają po zapisie głosu i odświeżeniu", async ({ page, database }) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+
+  // Kontrola: zwykłe głosowanie nadal działa.
   await createPoll(page);
   await vote(page, "Pizza");
 
@@ -17,8 +19,9 @@ test("demo monitoringu psuje tylko wyniki pięciu propozycji i zachowuje zapisan
   await page.getByRole("radio", { name: "Sałatka", exact: true }).check();
   await page.getByRole("button", { name: "Głosuję", exact: true }).click();
 
-  const expectedHeading = DEMO_RESULTS_ERROR_ENABLED ? "Chwila przerwy" : "Tak głosuje ekipa";
-  await expect(page.getByRole("heading", { name: expectedHeading, exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Tak głosuje ekipa", exact: true })).toBeVisible();
+  await expect(page.locator(".result-row")).toHaveCount(5);
+  await expect(page.locator(".result-row").filter({ hasText: "Sałatka" })).toContainText("100%");
 
   const saved = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)!), `co-zamawiamy:vote:${pollId}`);
   expect(saved.status).toBe("saved");
@@ -28,12 +31,16 @@ test("demo monitoringu psuje tylko wyniki pięciu propozycji i zachowuje zapisan
   );
   expect(result.rows).toEqual([{ id: saved.operationId, label: "Sałatka" }]);
 
-  // Odświeżenie nie ponawia zapisu; przy aktywnej usterce błąd jest powtarzalny.
+  // Odświeżenie pokazuje wyniki z zachowanym głosem i nie ponawia zapisu.
   let voteRequests = 0;
   page.on("request", (request) => {
     if (request.method() === "POST" && new URL(request.url()).pathname === `/api/polls/${pollId}/votes`) voteRequests++;
   });
   await page.reload();
-  await expect(page.getByRole("heading", { name: expectedHeading, exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Tak głosuje ekipa", exact: true })).toBeVisible();
+  await expect(page.locator(".result-row")).toHaveCount(5);
+  await expect(page.locator(".result-row").filter({ hasText: "Sałatka" })).toContainText("Twój wybór");
+  await expect(page.locator(".result-row").filter({ hasText: "Sałatka" })).toContainText("100%");
   expect(voteRequests).toBe(0);
+  expect(pageErrors).toEqual([]);
 });
