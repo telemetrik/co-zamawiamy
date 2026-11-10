@@ -105,7 +105,7 @@ export function NewPoll() {
             <p id={`help-${option.id}`} className="field-help field-error option-help">{errors[`option-${index}`] || ""}</p>
           </div>)}
         </div>
-        <button type="button" className="add-button" disabled={options.length >= 5 || !!pending}
+        <button type="button" className="add-button" disabled={options.length >= 4 || !!pending}
           onClick={() => { focusAdded.current = true; setOptions([...options, { id: crypto.randomUUID(), value: "" }]); }}>
           <Icon name="plus" />{options.length >= 5 ? "Maksymalnie 5 propozycji" : "Dodaj propozycję"}
         </button>
