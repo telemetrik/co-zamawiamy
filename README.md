@@ -73,7 +73,7 @@ Stan sprawdzeń i granice weryfikacji: [weryfikacja](docs/verification.md).
 Demo monitoringu w PostHog: [głos zapisany, wyniki nie działają](docs/monitoring-demo.md).
 Stała `DEMO_RESULTS_ERROR_ENABLED` w `lib/demo-results-error.ts` steruje błędem
 wyników przy pięciu propozycjach: `true` włącza usterkę, `false` ją wyłącza.
-Obecnie usterka jest wyłączona. Regresję i jej cofnięcie można pokazać zmianą kodu w Git.
+Obecnie usterka jest włączona. Regresję i jej cofnięcie można pokazać zmianą kodu w Git.
 
 ## Jak działa zapis
 
