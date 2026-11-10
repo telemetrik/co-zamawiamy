@@ -22,8 +22,8 @@ export function NewPoll() {
   const [storageWarning, setStorageWarning] = useState(false);
   const inFlight = useRef(false);
   const errorRef = useRef<HTMLParagraphElement>(null);
-  const newInputRef = useRef<HTMLInputElement>(null);
-  const focusAdded = useRef(false);
+  const optionInputs = useRef(new Map<string, HTMLInputElement>());
+  const focusOptionId = useRef<string | null>(null);
 
   useEffect(() => {
     const saved = readStorage("sessionStorage", draftKey);
@@ -40,7 +40,10 @@ export function NewPoll() {
   }, []);
 
   useEffect(() => {
-    if (focusAdded.current) { newInputRef.current?.focus(); focusAdded.current = false; }
+    if (focusOptionId.current) {
+      optionInputs.current.get(focusOptionId.current)?.focus();
+      focusOptionId.current = null;
+    }
   }, [options.length]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -95,18 +98,29 @@ export function NewPoll() {
           {options.map((option, index) => <div key={option.id} className="proposal-field">
             <div className="input-row">
               <span className="option-number" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
-              <input id={`option-${option.id}`} name={`option-${index}`} ref={index === options.length - 1 ? newInputRef : undefined}
+              <input id={`option-${option.id}`} name={`option-${index}`} ref={(input) => {
+                if (input) optionInputs.current.set(option.id, input);
+                else optionInputs.current.delete(option.id);
+              }}
                 placeholder={examples[index]} value={option.value} maxLength={60} required readOnly={!!pending}
                 aria-label={`Propozycja ${index + 1}`} aria-invalid={!!errors[`option-${index}`]} aria-describedby={`help-${option.id}`}
                 onChange={(event) => setOptions(options.map((item) => item.id === option.id ? { ...item, value: event.target.value } : item))} />
-              <button className="icon-button" type="button" tabIndex={-1} aria-label={`Usuń propozycję ${index + 1}`} disabled={options.length <= 2 || !!pending}
-                onClick={() => { setOptions(options.filter((item) => item.id !== option.id)); setErrors({}); }}><Icon name="close" /></button>
+              <button className="icon-button" type="button" aria-label={`Usuń propozycję ${index + 1}`} disabled={options.length <= 2 || !!pending}
+                onClick={() => {
+                  const remaining = options.filter((item) => item.id !== option.id);
+                  focusOptionId.current = remaining[Math.min(index, remaining.length - 1)].id;
+                  setOptions(remaining); setErrors({});
+                }}><Icon name="close" /></button>
             </div>
             <p id={`help-${option.id}`} className="field-help field-error option-help">{errors[`option-${index}`] || ""}</p>
           </div>)}
         </div>
         <button type="button" className="add-button" disabled={options.length >= 5 || !!pending}
-          onClick={() => { focusAdded.current = true; setOptions([...options, { id: crypto.randomUUID(), value: "" }]); }}>
+          onClick={() => {
+            const id = crypto.randomUUID();
+            focusOptionId.current = id;
+            setOptions([...options, { id, value: "" }]);
+          }}>
           <Icon name="plus" />{options.length >= 5 ? "Maksymalnie 5 propozycji" : "Dodaj propozycję"}
         </button>
       </fieldset>

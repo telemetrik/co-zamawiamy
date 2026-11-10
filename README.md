@@ -16,9 +16,11 @@ cp .env.example .env.local
 W [Neon Console](https://console.neon.tech) utwórz projekt Free. W **Connect** wybierz właściwy branch i bazę, włącz **Connection pooling** i wstaw connection string jako `DATABASE_URL` do `.env.local`. Zachowaj parametry TLS z Neon. Nie publikuj pliku ani hasła.
 
 ```sh
-npm run db:migrate
+npm run db:migrate -- --target YOUR-ENDPOINT-pooler.eu-central-1.aws.neon.tech:5432/neondb
 npm run dev
 ```
+
+Zastąp cel po `--target` rzeczywistym hostem, portem i nazwą bazy. Skrypt porównuje go z `DATABASE_URL_UNPOOLED` (jeśli ustawiono) albo `DATABASE_URL`. Brak lub inny cel zatrzymuje migrację **przed połączeniem** i pokazuje adres bez użytkownika i hasła. To potwierdzenie wybranej bazy, nie automatyczne rozpoznawanie produkcji. Dla lokalnego PostgreSQL przykładowy cel to `127.0.0.1:5432/co_zamawiamy`.
 
 Otwórz [http://localhost:3000](http://localhost:3000). Po zmianie zmiennych zrestartuj serwer. Bez połączenia do bazy działa strona główna, ale zapis zgłasza błąd - nie ma zastępczej bazy w pamięci.
 
@@ -62,13 +64,15 @@ Przy błędzie raport zawiera zrzut ekranu i trace. GitHub Actions uruchamia ten
 
 ## Wdrożenie i lekcja
 
-Na Vercel wybierz Next.js i Node.js 24.x. Ustaw `DATABASE_URL` dla Production; Preview powinno korzystać z osobnego brancha Neon. **Przed pierwszym wdrożeniem i po zmianie schematu uruchom raz `npm run db:migrate` z połączeniem do docelowej bazy, a dopiero potem deploy.** Migracje nie uruchamiają się w buildzie ani przy żądaniach.
+Na Vercel wybierz Next.js i Node.js 24.x. Ustaw `DATABASE_URL` dla Production; Preview powinno korzystać z osobnego brancha Neon. **Przed pierwszym wdrożeniem i po zmianie schematu uruchom raz `npm run db:migrate -- --target HOST:PORT/BAZA` z jawnym celem zgodnym z konfiguracją, a dopiero potem deploy.** Migracje nie uruchamiają się w buildzie ani przy żądaniach.
 
 Górny pasek, linki i przyciski mają czerwony motyw z etykietą `PRODUKCJA` dla `VERCEL_ENV=production`, a zielony z etykietą `DEV` dla pozostałych środowisk Vercel. Poza Vercel decyduje `NODE_ENV`: `npm run dev` ma motyw DEV, a build produkcyjny motyw PRODUKCJA.
 
 Pełne instrukcje konfiguracji, migracji, podglądu rekordów, ograniczeń darmowych planów i scenariusz demonstracji: [lekcja i wdrożenie](docs/lesson-and-deployment.md).
 
 Stan sprawdzeń i granice weryfikacji: [weryfikacja](docs/verification.md).
+
+Kontrola nowego wydania, warunki zatrzymania publikacji i pierwsze kroki awarii: [instrukcja dla Piotra](docs/release-and-recovery.md).
 
 Demo monitoringu w PostHog: [głos zapisany, wyniki nie działają](docs/monitoring-demo.md).
 Stała `DEMO_RESULTS_ERROR_ENABLED` w `lib/demo-results-error.ts` steruje błędem

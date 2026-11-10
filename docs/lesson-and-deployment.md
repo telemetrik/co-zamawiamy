@@ -20,11 +20,13 @@ cp .env.example .env.local
 5. Uruchom migracje, a następnie aplikację:
 
 ```sh
-npm run db:migrate
+npm run db:migrate -- --target YOUR-ENDPOINT-pooler.eu-central-1.aws.neon.tech:5432/neondb
 npm run dev
 ```
 
 Otwórz [http://localhost:3000](http://localhost:3000). Dane od początku są zapisywane w Neon. Aplikacja nie przełącza się na pamięć, plik ani atrapę bazy. Restart serwera i kolejne wdrożenie zachowują dane, jeśli `DATABASE_URL` nadal wskazuje tę samą bazę i branch.
+
+W poleceniu migracji zastąp przykładowy cel rzeczywistym `HOST:PORT/BAZA`, bez hasła. Musi pasować do `DATABASE_URL_UNPOOLED`, jeśli jest ustawiona, albo do `DATABASE_URL`. Brak lub pomyłka w `--target` zatrzymuje skrypt przed połączeniem. Nie kopiuj celu z komunikatu bez sprawdzenia, czy chcesz zmieniać właśnie tę bazę.
 
 Bez `DATABASE_URL` strona główna nadal działa, ale zapis zwróci czytelny błąd. Po zmianie `.env.local` zrestartuj serwer.
 
@@ -33,8 +35,8 @@ Bez `DATABASE_URL` strona główna nadal działa, ale zapis zwróci czytelny bł
 1. Opublikuj projekt we własnym repozytorium Git i zaimportuj je w Vercel. Framework: **Next.js**, Node.js: **24.x**. Build: `npm run build`; instalacja: `npm ci`. Nie ustawiaj statycznego eksportu ani katalogu `out`.
 2. W **Settings > Environment Variables** ustaw `DATABASE_URL` z Neon dla **Production**. Zmienna jest potrzebna w serwerze, nie w przeglądarce. `DATABASE_URL_UNPOOLED` nie jest potrzebna do działania aplikacji na Vercel.
 3. Dla **Preview** użyj osobnego brancha lub bazy Neon i osobnej wartości `DATABASE_URL`. Preview nie powinno zapisywać głosów do bazy demonstracyjnej Production.
-4. **Przed pierwszym wdrożeniem** zastosuj migracje do właściwej bazy. Najprościej uruchomić lokalnie `npm run db:migrate` z `.env.local` wskazującym docelowy branch. Jeśli lokalna aplikacja używa tej samej bazy, migracje będą już zastosowane; ponowienie jest bezpieczne.
-5. Przy kolejnych zmianach schematu: zmień `db/schema.ts`, uruchom `npm run db:generate`, sprawdź wygenerowany SQL i zapisz cały katalog `drizzle` w Git. Zastosuj `npm run db:migrate` **raz, przed wdrożeniem nowego kodu**, z połączeniem do docelowej bazy. Dla Preview powtórz migrację na jego branchu.
+4. **Przed pierwszym wdrożeniem** zastosuj migracje do właściwej bazy. Uruchom lokalnie `npm run db:migrate -- --target HOST:PORT/BAZA` z `.env.local` wskazującym docelowy branch i celem pasującym do wybranego połączenia. Skrypt wymaga podania celu także przy ponownym uruchomieniu. Oceniaj bezpieczeństwo zmian na podstawie SQL i próby na izolowanej bazie.
+5. Przy kolejnych zmianach schematu: zmień `db/schema.ts`, uruchom `npm run db:generate`, sprawdź wygenerowany SQL i zapisz cały katalog `drizzle` w Git. Zastosuj `npm run db:migrate -- --target HOST:PORT/BAZA` **raz, przed wdrożeniem nowego kodu**, z połączeniem do docelowej bazy. Dla Preview wskaż jego osobny branch i cel.
 6. Dopiero potem uruchom deploy. Zmiana zmiennych środowiskowych wymaga nowego wdrożenia.
 
 Build i start **nie uruchamiają migracji automatycznie**. Nie dodawaj migracji do `build` ani do obsługi żądania - równoległe wdrożenia nie powinny zmieniać schematu jednocześnie. Zastosowane migracje są zapisane w `drizzle.__drizzle_migrations`. Nie używaj `db:push` zamiast historii migracji.
