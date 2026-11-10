@@ -74,10 +74,8 @@ Stan sprawdzeń i granice weryfikacji: [weryfikacja](docs/verification.md).
 
 Kontrola nowego wydania, warunki zatrzymania publikacji i pierwsze kroki awarii: [instrukcja dla Piotra](docs/release-and-recovery.md).
 
-Demo monitoringu w PostHog: [głos zapisany, wyniki nie działają](docs/monitoring-demo.md).
-Stała `DEMO_RESULTS_ERROR_ENABLED` w `lib/demo-results-error.ts` steruje błędem
-wyników przy pięciu propozycjach: `true` włącza usterkę, `false` ją wyłącza.
-Obecnie usterka jest wyłączona. Regresję i jej cofnięcie można pokazać zmianą kodu w Git.
+Naprawa demonstracyjnego błędu wyników pięciu propozycji i jej weryfikacja:
+[głos zapisany, wyniki działają](docs/monitoring-demo.md).
 
 ## Jak działa zapis
 
