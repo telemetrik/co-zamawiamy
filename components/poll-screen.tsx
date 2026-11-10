@@ -46,7 +46,7 @@ export function PollScreen({ initialPoll }: { initialPoll: Poll }) {
       setRecord(saved); setSelected(saved.optionId);
       if (saved.status === "pending") setError("Poprzednia próba nie ma potwierdzenia. Ponów zapis wybranej odpowiedzi.");
     }
-    setLink(new URL(`/p/${initialPoll.id}`, window.location.origin).href);
+    setLink(new URL(`/p/${initialPoll.id}`, "https://co-zamawiamy.vercel.app/").href);
     setReady(true);
   }, [storageKey, initialPoll]);
 
