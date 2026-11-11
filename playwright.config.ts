@@ -56,8 +56,9 @@ export default defineConfig({
       PLAYWRIGHT_TEST: "1",
       DATABASE_URL: databaseUrl,
       DATABASE_URL_UNPOOLED: databaseUrl,
-      NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN: "",
-      NEXT_PUBLIC_POSTHOG_HOST: "",
+      VERCEL_ENV: "production",
+      NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN: "phc_playwright",
+      NEXT_PUBLIC_POSTHOG_HOST: "https://posthog.test",
     },
   },
 });

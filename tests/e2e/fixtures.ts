@@ -5,7 +5,35 @@ import { isUuid } from "../../lib/validation";
 
 export { expect };
 
-export const test = base.extend<{ database: Pool; cleanupPolls: void }>({
+export const test = base.extend<{
+  database: Pool;
+  cleanupPolls: void;
+  pollFormVariant: "control" | "two-fields" | null;
+  mockPostHog: void;
+}>({
+  pollFormVariant: null,
+  mockPostHog: [async ({ context, pollFormVariant }, use) => {
+    await context.route("https://posthog.test/**", async (route) => {
+      const pathname = new URL(route.request().url()).pathname;
+      if (pathname.endsWith(".js")) {
+        await route.fulfill({ contentType: "application/javascript", body: "" });
+        return;
+      }
+      const key = "poll-starting-options";
+      const flags = pollFormVariant ? {
+        [key]: { key, enabled: true, variant: pollFormVariant, metadata: { id: 1, version: 1, has_experiment: true } },
+      } : {};
+      await route.fulfill({
+        headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*" },
+        json: pathname === "/flags/" ? { flags, errorsWhileComputingFlags: false }
+          : pathname.endsWith("/config") ? {
+            analytics: { endpoint: "/i/v0/e/" }, supportedCompression: ["gzip", "gzip-js"],
+            defaultIdentifiedOnly: true, hasFeatureFlags: true,
+          } : { status: 1 },
+      });
+    });
+    await use();
+  }, { auto: true }],
   database: async ({}, use) => {
     const database = new Pool({
       connectionString: process.env.E2E_DATABASE_URL,
