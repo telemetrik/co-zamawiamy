@@ -10,8 +10,12 @@ import { Icon } from "./icons";
 const draftKey = "co-zamawiamy:pending-poll";
 const examples = ["Pizza", "Sushi", "Kebab", "Burgery", "Sałatka"];
 const posthogConfigured = Boolean(process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN && process.env.NEXT_PUBLIC_POSTHOG_HOST);
+const experimentKey = "poll-starting-options";
+const flagWaitMs = 1000;
+type Variant = "control" | "two-fields";
 
-export function NewPoll() {
+export function NewPoll({ runExperiment }: { runExperiment: boolean }) {
+  const experimentEnabled = runExperiment && posthogConfigured;
   const [question, setQuestion] = useState("Co dziś zamawiamy?");
   const [options, setOptions] = useState([{ id: "a", value: "" }, { id: "b", value: "" }, { id: "c", value: "" }]);
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -19,6 +23,7 @@ export function NewPoll() {
   const [saving, setSaving] = useState(false);
   const [pending, setPending] = useState<CreatePollInput | null>(null);
   const [ready, setReady] = useState(false);
+  const [variant, setVariant] = useState<Variant | null>(null);
   const [storageWarning, setStorageWarning] = useState(false);
   const inFlight = useRef(false);
   const errorRef = useRef<HTMLParagraphElement>(null);
@@ -34,10 +39,47 @@ export function NewPoll() {
         setQuestion(input.question);
         setOptions(input.options.map((value, index) => ({ id: `restored-${index}`, value })));
         setError("Poprzednia próba nie ma potwierdzenia. Ponów zapis tego głosowania.");
+        setReady(true);
+        return;
       } catch { writeStorage("sessionStorage", draftKey, null); }
     }
-    setReady(true);
-  }, []);
+
+    if (!experimentEnabled) {
+      setReady(true);
+      return;
+    }
+
+    let resolved = false;
+    function showForm() {
+      // Never change the fields after the form becomes interactive.
+      if (resolved) return;
+      resolved = true;
+      const flag = posthog.getFeatureFlag(experimentKey, { send_event: false });
+      if (flag === "control" || flag === "two-fields") {
+        setVariant(flag);
+        if (flag === "two-fields") setOptions((initial) => initial.slice(0, 2));
+      }
+      setReady(true);
+    }
+
+    // If PostHog is blocked or slow, keep the form usable. The SDK can reuse a cached flag.
+    const timeout = window.setTimeout(showForm, flagWaitMs);
+    const unsubscribe = posthog.onFeatureFlags(() => {
+      window.clearTimeout(timeout);
+      showForm();
+    });
+    return () => {
+      window.clearTimeout(timeout);
+      unsubscribe();
+    };
+  }, [experimentEnabled]);
+
+  useEffect(() => {
+    // Record exposure only after React renders the assigned form, using PostHog's native event.
+    if (ready && variant && posthog.getFeatureFlag(experimentKey, { send_event: false }) === variant) {
+      posthog.getFeatureFlag(experimentKey);
+    }
+  }, [ready, variant]);
 
   useEffect(() => {
     if (focusOptionId.current) {
@@ -67,7 +109,7 @@ export function NewPoll() {
         posthog.capture("poll_created", {
           option_count: input.options.length,
           was_retry: pending !== null,
-        });
+        }, { send_instantly: true });
       }
       writeStorage("sessionStorage", draftKey, null);
       window.location.assign(`/p/${pollId}`);
@@ -84,7 +126,8 @@ export function NewPoll() {
 
   return <section className="form-sheet" aria-labelledby="new-poll-title">
     <div className="sheet-heading"><h2 id="new-poll-title">Nowe głosowanie</h2><span className="quiet">Bez logowania</span></div>
-    <form onSubmit={submit} noValidate aria-busy={saving}>
+    {experimentEnabled && !ready && <p className="field-help" role="status">Ładuję formularz...</p>}
+    <form hidden={experimentEnabled && !ready} onSubmit={submit} noValidate aria-busy={saving}>
       <div className="question-field">
         <div className="label-row"><label htmlFor="question">O co pytasz ekipę?</label><span className="counter">{question.length}/120</span></div>
         <input id="question" name="question" value={question} maxLength={120} required readOnly={!!pending}

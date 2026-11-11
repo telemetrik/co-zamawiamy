@@ -50,7 +50,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Runner stosuje migracje do bazy testowej, buduje aplikację produkcyjną w osobnym katalogu `.next/e2e` i uruchamia własny serwer na `http://127.0.0.1:3100`. Port musi być wolny. Analityka PostHog jest wyłączona podczas budowania i działania serwera testowego.
+Runner stosuje migracje do bazy testowej, buduje aplikację produkcyjną w osobnym katalogu `.next/e2e` i uruchamia własny serwer na `http://127.0.0.1:3100`. Port musi być wolny. Playwright przechwytuje żądania PostHog pod fikcyjnym adresem `posthog.test`; testy nie wysyłają zdarzeń do projektu analitycznego.
 
 Zestaw sprawdza walidację i limity formularza, tworzenie głosowania, link i obecność QR, prawdziwy schowek i jego odmowę dostępu, głosowanie dwóch uczestników, wyniki na żywo, zapamiętanie głosu, nieistniejące linki oraz powrót po błędach sieci. Testy ponowień przepuszczają zapis do bazy, przerywają odpowiedź i sprawdzają w SQL, że ponowienie po odświeżeniu nie tworzy duplikatu. Po każdym teście runner usuwa wyłącznie jego głosowania wraz z propozycjami i głosami, także po nieudanej asercji.
 
@@ -86,3 +86,7 @@ Trzy tabele: `polls`, `options`, `votes`. Tworzenie głosowania jest transakcją
 Przeglądarka zapamiętuje oddany głos osobno dla każdego głosowania. Czyszczenie pamięci lub użycie innej przeglądarki umożliwia kolejny głos - to celowo prosta ochrona przed przypadkowym powtórzeniem, bez identyfikacji uczestników.
 
 PostHog rejestruje `poll_created`, `poll_link_copied` i `vote_submitted`, błędy przeglądarki oraz serwerowe logi `poll_created` i `vote_recorded`. Aby go włączyć, ustaw `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` i `NEXT_PUBLIC_POSTHOG_HOST` z `.env.example`, a następnie zrestartuj serwer (lub ponownie zbuduj aplikację produkcyjną). Bez tych zmiennych aplikacja działa bez analityki.
+
+[Eksperyment "Dwa pola na start"](https://eu.posthog.com/project/341841/experiments/112446) działa na produkcji Vercel po uruchomieniu flagi `poll-starting-options`. PostHog przydziela przeglądarkę do A (`control`, trzy pola) albo B (`two-fields`, dwa pola) w proporcji 50/50. Przydział korzysta z identyfikatora zapisanego w przeglądarce dla danej domeny. W obu wariantach można dodać pola do pięciu. Bez przydziału formularz startuje od trzech pól i nie rejestruje ekspozycji. Ponowienie zapisu odtwarza poprzednią próbę bez zmiany liczby pól.
+
+Główna metryka to odsetek przeglądarek, które zapisały głosowanie w ciągu 10 minut od pierwszego wyświetlenia wariantu. Pomocniczo PostHog mierzy udział zapisów z co najmniej trzema propozycjami w tym samym oknie.
