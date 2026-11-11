@@ -9,20 +9,28 @@ export const test = base.extend<{
   database: Pool;
   cleanupPolls: void;
   pollFormVariant: "control" | "two-fields" | null;
+  oneClickVote: boolean | null;
   mockPostHog: void;
 }>({
   pollFormVariant: null,
-  mockPostHog: [async ({ context, pollFormVariant }, use) => {
+  oneClickVote: null,
+  mockPostHog: [async ({ context, pollFormVariant, oneClickVote }, use) => {
     await context.route("https://posthog.test/**", async (route) => {
       const pathname = new URL(route.request().url()).pathname;
       if (pathname.endsWith(".js")) {
         await route.fulfill({ contentType: "application/javascript", body: "" });
         return;
       }
-      const key = "poll-starting-options";
-      const flags = pollFormVariant ? {
-        [key]: { key, enabled: true, variant: pollFormVariant, metadata: { id: 1, version: 1, has_experiment: true } },
-      } : {};
+      const formFlag = "poll-starting-options";
+      const voteFlag = "one-click-vote";
+      const flags = {
+        ...(pollFormVariant && {
+          [formFlag]: { key: formFlag, enabled: true, variant: pollFormVariant, metadata: { id: 1, version: 1, has_experiment: true } },
+        }),
+        ...(oneClickVote !== null && {
+          [voteFlag]: { key: voteFlag, enabled: oneClickVote, variant: null, metadata: { id: 2, version: 1 } },
+        }),
+      };
       await route.fulfill({
         headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*" },
         json: pathname === "/flags/" ? { flags, errorsWhileComputingFlags: false }
@@ -76,7 +84,6 @@ export async function createPoll(page: Page) {
   await page.getByRole("button", { name: "Utwórz głosowanie", exact: true }).click();
   await expect(page).toHaveURL(/\/p\/[0-9a-f-]{36}$/);
   await expect(page.getByRole("heading", { name: question, exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Głosuję", exact: true })).toBeEnabled();
   return page.url();
 }
 

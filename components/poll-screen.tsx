@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { QRCodeSVG } from "qrcode.react";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import posthog from "posthog-js";
 import { ApiError, postJson, readStorage, writeStorage } from "@/lib/client";
 import type { Poll, VoteInput } from "@/lib/types";
@@ -22,9 +22,12 @@ function validRecord(value: unknown, poll: Poll): value is VoteRecord {
 const percent = (votes: number, total: number) => total ? Math.round(votes / total * 100) : 0;
 const voteCount = (count: number) => `${count} ${count === 1 ? "głos" : count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 12 || count % 100 > 14) ? "głosy" : "głosów"}`;
 const posthogConfigured = Boolean(process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN && process.env.NEXT_PUBLIC_POSTHOG_HOST);
+const voteFlag = "one-click-vote";
+const flagWaitMs = 1000;
 
 export function PollScreen({ initialPoll }: { initialPoll: Poll }) {
-  const [ready, setReady] = useState(false);
+  const [oneClickVote, setOneClickVote] = useState<boolean | null>(null);
+  const ready = oneClickVote !== null;
   const [record, setRecord] = useState<VoteRecord | null>(null);
   const voted = record?.status === "saved";
   const { poll, updatePoll, connection } = useLivePoll(initialPoll, ready && voted);
@@ -40,21 +43,46 @@ export function PollScreen({ initialPoll }: { initialPoll: Poll }) {
   const storageKey = `co-zamawiamy:vote:${poll.id}`;
 
   useEffect(() => {
+    setLink(new URL(`/p/${initialPoll.id}`, "https://co-zamawiamy.vercel.app/").href);
     const saved = readStorage("localStorage", storageKey);
     if (validRecord(saved, initialPoll)) {
       setRecord(saved); setSelected(saved.optionId);
-      if (saved.status === "pending") setError("Poprzednia próba nie ma potwierdzenia. Ponów zapis wybranej odpowiedzi.");
+      if (saved.status === "saved") {
+        setOneClickVote(false);
+        return;
+      }
+      setError("Poprzednia próba nie ma potwierdzenia. Ponów zapis wybranej odpowiedzi.");
     }
-    setLink(new URL(`/p/${initialPoll.id}`, "https://co-zamawiamy.vercel.app/").href);
-    setReady(true);
+    if (!posthogConfigured) {
+      setOneClickVote(false);
+      return;
+    }
+
+    let resolved = false;
+    function showVoting(enabled: boolean) {
+      resolved = true;
+      window.clearTimeout(timeout);
+      setOneClickVote(enabled);
+    }
+
+    const timeout = window.setTimeout(() => showVoting(false), flagWaitMs);
+    const unsubscribe = posthog.onFeatureFlags((_flags, _variants, status) => {
+      // Keep the controls stable after the form opens and ignore cached assignments.
+      if (resolved) return;
+      const flag = status?.errorsLoading ? false : posthog.getFeatureFlag(voteFlag, { fresh: true });
+      if (flag !== undefined) showVoting(flag === true);
+    });
+    return () => {
+      window.clearTimeout(timeout);
+      unsubscribe();
+    };
   }, [storageKey, initialPoll]);
 
-  async function vote(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function vote(optionId: string) {
     if (inFlight.current || record?.status === "saved") return;
-    if (!selected) { setError("Wybierz jedną propozycję, zanim oddasz głos."); return; }
+    if (!optionId) { setError("Wybierz jedną propozycję, zanim oddasz głos."); return; }
     inFlight.current = true; setSaving(true); setError("");
-    const attempt: VoteRecord = record ?? { operationId: crypto.randomUUID(), optionId: selected, status: "pending" };
+    const attempt: VoteRecord = record ?? { operationId: crypto.randomUUID(), optionId, status: "pending" };
     setRecord(attempt);
     setStorageWarning(!writeStorage("localStorage", storageKey, attempt));
     try {
@@ -105,20 +133,32 @@ export function PollScreen({ initialPoll }: { initialPoll: Poll }) {
           <span className="live-dot" aria-hidden="true" />
           {connection === "live" ? "Wyniki na żywo" : connection === "reconnecting" ? "Brak aktualizacji. Ponawiam połączenie..." : connection === "paused" ? "Aktualizacje wrócą po otwarciu karty." : "Łączę z wynikami na żywo..."}
         </p>
-      </> : <form onSubmit={vote} aria-busy={saving} noValidate>
+      </> : <form onSubmit={(event) => {
+        event.preventDefault();
+        if (!oneClickVote) void vote(selected);
+      }} aria-busy={saving} noValidate>
         <fieldset className="vote-fieldset" disabled={saving}>
           <legend>Na co masz ochotę?</legend>
-          <p className="field-help" id="vote-help">Wybierz jedną propozycję. Po głosowaniu zobaczysz wyniki.</p>
+          <p className="field-help" id="vote-help">{oneClickVote ? "Kliknij propozycję, żeby oddać głos i zobaczyć wyniki." : "Wybierz jedną propozycję. Po głosowaniu zobaczysz wyniki."}</p>
           <div className="vote-options">
-            {poll.options.map((option) => <label className={`vote-option ${selected === option.id ? "selected" : ""}`} key={option.id}>
-              <input type="radio" name="lunch" value={option.id} checked={selected === option.id} disabled={!!record && selected !== option.id}
-                aria-describedby="vote-help" onChange={() => { setSelected(option.id); setError(""); }} />
-              <span>{option.label}</span>
-            </label>)}
+            {poll.options.map((option) => {
+              if (!oneClickVote) return <label className={`vote-option ${selected === option.id ? "selected" : ""}`} key={option.id}>
+                <input type="radio" name="lunch" value={option.id} checked={selected === option.id} disabled={!!record && selected !== option.id}
+                  aria-describedby="vote-help" onChange={() => { setSelected(option.id); setError(""); }} />
+                <span>{option.label}</span>
+              </label>;
+
+              const pending = record?.optionId === option.id;
+              const action = pending ? (saving ? "Zapisuję głos na" : "Ponów zapis głosu na") : "Głosuję na";
+              return <button key={option.id} className="button secondary vote-button" type="button"
+                disabled={!!record && !pending} aria-describedby="vote-help" onClick={() => void vote(option.id)}>
+                <span>{`${action} "${option.label}"`}</span><Icon name="arrow" />
+              </button>;
+            })}
           </div>
         </fieldset>
         {error && <p role="alert" className="error-message" tabIndex={-1} ref={errorRef}>{error}</p>}
-        <button className="button primary submit-button" disabled={saving} type="submit">{saving ? "Zapisuję głos..." : record ? "Ponów zapis głosu" : "Głosuję"}<Icon name="arrow" /></button>
+        {!oneClickVote && <button className="button primary submit-button" disabled={saving} type="submit">{saving ? "Zapisuję głos..." : record ? "Ponów zapis głosu" : "Głosuję"}<Icon name="arrow" /></button>}
         <p className="form-footnote">Głosujesz bez podawania swoich danych.</p>
       </form>}
       {storageWarning && <p className="notice" role="status">Przeglądarka blokuje zapamiętanie głosu. {voted ? "Głos jest zapisany, ale po odświeżeniu możesz ponownie zobaczyć formularz." : "Przy błędzie ponów zapis bez opuszczania strony."}</p>}

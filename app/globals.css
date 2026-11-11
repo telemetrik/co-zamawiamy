@@ -66,6 +66,9 @@ legend { padding: 0; }
 .vote-option input { flex-shrink: 0; margin: 0; width: 20px; height: 20px; accent-color: var(--color-accent); }
 .vote-option.selected { border-color: var(--color-accent); background: var(--color-accent-soft); color: var(--color-ink); }
 .vote-option:has(input:disabled) { cursor: not-allowed; }
+.vote-button { justify-content: space-between; text-align: left; white-space: normal; }
+.vote-button span { min-width: 0; overflow-wrap: anywhere; }
+.vote-button svg { flex-shrink: 0; }
 .vote-fieldset:disabled { opacity: 0.6; }
 .saved-message { display: flex; align-items: center; gap: 10px; color: var(--color-accent); font-size: var(--text-sm); margin-bottom: var(--space-xl); }
 .results-heading { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: var(--space-sm); margin-bottom: var(--space-lg); }
