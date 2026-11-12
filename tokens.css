@@ -44,3 +44,27 @@
   --color-accent-hover: oklch(38% 0.10 150);
   --color-accent-soft: oklch(96% 0.025 150);
 }
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-paper: oklch(17% 0.012 300);
+  --color-surface: oklch(22% 0.015 300);
+  --color-soft: oklch(27% 0.018 300);
+  --color-ink: oklch(96% 0.01 300);
+  --color-muted: oklch(77% 0.023 300);
+  --color-rule: oklch(36% 0.025 300);
+  --color-input-rule: oklch(56% 0.027 300);
+  --color-accent: oklch(79% 0.12 300);
+  --color-accent-hover: oklch(86% 0.09 300);
+  --color-accent-ink: oklch(20% 0.025 300);
+  --color-accent-soft: oklch(32% 0.06 300);
+  --color-danger: oklch(80% 0.13 29);
+  --color-danger-soft: oklch(29% 0.06 29);
+  --color-focus: oklch(88% 0.06 300);
+  --color-shadow: oklch(0% 0 0 / 0.22);
+}
+
+:root[data-font="comic-sans"] {
+  --font-body: "Comic Sans MS", "Comic Sans", "Comic Relief", cursive;
+  --font-display: var(--font-body);
+}
