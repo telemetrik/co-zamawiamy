@@ -14,6 +14,7 @@ if (!posthogProjectToken || !posthogHost) {
     api_host: posthogHost,
     defaults: "2026-08-30",
     capture_exceptions: true,
+    opt_in_site_apps: true,
     debug: process.env.NODE_ENV === "development",
   });
 }
