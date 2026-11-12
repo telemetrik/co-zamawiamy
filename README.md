@@ -87,6 +87,8 @@ Przeglądarka zapamiętuje oddany głos osobno dla każdego głosowania. Czyszcz
 
 PostHog rejestruje `poll_created`, `poll_link_copied` i `vote_submitted`, błędy przeglądarki oraz serwerowe logi `poll_created` i `vote_recorded`. Aby go włączyć, ustaw `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` i `NEXT_PUBLIC_POSTHOG_HOST` z `.env.example`, a następnie zrestartuj serwer (lub ponownie zbuduj aplikację produkcyjną). Bez tych zmiennych aplikacja działa bez analityki.
 
+Chmura miast na stronie głównej pobiera zbiorcze dane z endpointu `poll_reach_by_city` za pośrednictwem `/api/city-reach`. Ustaw na serwerze `POSTHOG_CITY_REACH_API_KEY` z uprawnieniem `endpoint:read`, `POSTHOG_HOST=https://eu.posthog.com` i `POSTHOG_PROJECT_ID=341841`. Lokalnie dodaj je do `.env.local`, a na Vercel zapisz klucz jako Secret. Brak klucza lub awaria PostHoga nie blokuje formularza ankiety.
+
 [Eksperyment "Dwa pola na start"](https://eu.posthog.com/project/341841/experiments/112446) działa na produkcji Vercel po uruchomieniu flagi `poll-starting-options`. PostHog przydziela przeglądarkę do A (`control`, trzy pola) albo B (`two-fields`, dwa pola) w proporcji 50/50. Przydział korzysta z identyfikatora zapisanego w przeglądarce dla danej domeny. W obu wariantach można dodać pola do pięciu. Bez przydziału formularz startuje od trzech pól i nie rejestruje ekspozycji. Ponowienie zapisu odtwarza poprzednią próbę bez zmiany liczby pól.
 
 Główna metryka to odsetek przeglądarek, które zapisały głosowanie w ciągu 10 minut od pierwszego wyświetlenia wariantu. Pomocniczo PostHog mierzy udział zapisów z co najmniej trzema propozycjami w tym samym oknie.

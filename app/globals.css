@@ -25,6 +25,16 @@ svg { flex-shrink: 0; }
 .home-intro { margin-bottom: var(--space-xl); }
 .home-intro h1 span { color: var(--color-muted); }
 .home-intro p, .poll-intro p { margin-top: var(--space-md); max-width: 53ch; color: var(--color-muted); }
+.city-reach { margin-top: var(--space-lg); padding: var(--space-md); border: 1px solid var(--color-rule); border-radius: var(--radius-lg); background: var(--color-soft); }
+.city-reach-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: var(--space-xs) var(--space-md); }
+.city-reach-header h2 { font-size: var(--text-base); }
+.city-reach-header > span, .city-reach-status { color: var(--color-muted); font-size: var(--text-sm); }
+.city-cloud { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 0.375rem 0.875rem; list-style: none; padding: 0; margin: var(--space-md) 0 0; }
+.city-cloud li { max-width: 100%; overflow-wrap: anywhere; color: var(--color-muted); line-height: 1.15; font-weight: 600; }
+.city-cloud li[data-prominent="true"] { color: var(--color-accent); font-weight: 700; }
+.city-reach-status { display: flex; align-items: center; gap: var(--space-sm); margin-top: var(--space-sm); }
+.city-reach-spinner { width: 0.875rem; height: 0.875rem; flex: 0 0 auto; border: 2px solid var(--color-rule); border-top-color: var(--color-accent); border-radius: 50%; animation: city-reach-spin 800ms linear infinite; }
+@keyframes city-reach-spin { to { transform: rotate(1turn); } }
 .form-sheet { padding: var(--space-lg); background: var(--color-surface); color: var(--color-ink); border: 1px solid var(--color-rule); border-radius: var(--radius-lg); box-shadow: 0 6px 24px var(--color-shadow); }
 .sheet-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); padding-bottom: var(--space-lg); margin-bottom: var(--space-lg); border-bottom: 1px solid var(--color-rule); }
 .quiet, .counter { color: var(--color-muted); font-size: var(--text-sm); }
@@ -129,4 +139,4 @@ button:not(:disabled):active, .button:active { transform: translateY(1px); }
   .form-sheet { padding: 18px; }
   .sheet-heading { align-items: flex-start; flex-direction: column; }
 }
-@media (prefers-reduced-motion: reduce) { button:not(:disabled):active, .button:active { transform: none; } .result-fill { transition: none; } }
+@media (prefers-reduced-motion: reduce) { button:not(:disabled):active, .button:active { transform: none; } .result-fill { transition: none; } .city-reach-spinner { animation: none; } }

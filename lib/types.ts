@@ -10,3 +10,5 @@ export type Poll = {
 export type CreatePollInput = { operationId: string; question: string; options: string[] };
 export type VoteInput = { operationId: string; optionId: string };
 export type FieldErrors = Record<string, string>;
+
+export type CityReach = { city: string; countryCode: string | null; sessions: number };
